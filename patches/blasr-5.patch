@@ -1,0 +1,278 @@
+Description: Update interface to blasr 5
+ blasr 5.1 and up began following the GNU convention for command-line flags.
+Author: Afif Elghraoui <afif@debian.org>
+Bug: https://sourceforge.net/p/pb-jelly/tickets/5/
+Bug-Debian: https://bugs.debian.org/844034
+Last-Update: 2016-12-11
+--- docs/TemplateProtocol.xml
++++ docs/TemplateProtocol.xml
+@@ -6,7 +6,7 @@
+         <command notes="For PBS/Moab">echo '${CMD}' | msub -N "${JOBNAME}" -o ${STDOUT} -e ${STDERR} -l nodes=1:ppn=8,mem=48000mb</command>
+         <nJobs>1</nJobs>
+     </cluster>
+-    <blasr>-minMatch 8 -sdpTupleSize 8 -minPctIdentity 75 -bestn 1 -nCandidates 10 -maxScore -500 -nproc 8 -noSplitSubreads</blasr>
++    <blasr>--minMatch 8 --sdpTupleSize 8 --minPctIdentity 75 --bestn 1 --nCandidates 10 --maxScore -500 --nproc 8 --noSplitSubreads</blasr>
+     <input baseDir="/FULL/PATH/TO__/PBJelly/lambdaExample/data/reads/">
+         <job>pacbioReads.fasta</job>
+     </input>
+--- docs/jellyExample/Protocol.xml
++++ docs/jellyExample/Protocol.xml
+@@ -1,7 +1,7 @@
+ <jellyProtocol>
+     <reference>/__PATH__/_TO_/jellyExample/data/reference/lambda.fasta</reference>  
+     <outputDir>/__PATH__/_TO_/jellyExample/</outputDir>
+-    <blasr>-minMatch 8 -minPctIdentity 70 -bestn 1 -nCandidates 20 -maxScore -500 -nproc 4 -noSplitSubreads</blasr>
++    <blasr>--minMatch 8 --minPctIdentity 70 --bestn 1 --nCandidates 20 --maxScore -500 --nproc 4 --noSplitSubreads</blasr>
+     <input baseDir="/__PATH__/_TO_/jellyExample/data/reads/">
+         <job>filtered_subreads.fastq</job>
+     </input>
+--- pbsuite/banana/chunkyBlasr.py
++++ pbsuite/banana/chunkyBlasr.py
+@@ -10,10 +10,10 @@
+ 
+ 
+ #These are your default blasr parameters. Adjust at will.
+-parameters = "-maxScore -1000 -bestn 24 -maxLCPLength 16 -nCandidates 24 -noSplitSubreads"
++parameters = "--maxScore -1000 --bestn 24 --maxLCPLength 16 --nCandidates 24 --noSplitSubreads"
+ 
+ 
+-command = Template("blasr ${FAS} ${REF} ${SA} -m 4 -out ${OUT} -start ${START} -stride ${STRIDE} ${EXTRAPARAMS}")
++command = Template("blasr ${FAS} ${REF} ${SA} -m 4 --out ${OUT} --start ${START} --stride ${STRIDE} ${EXTRAPARAMS}")
+ 
+ USAGE="""%prog <reads.fasta> --output <outName> [ <options> ]
+ Creates All vs All alignment of reads.fasta
+--- pbsuite/banana/Banana.py
++++ pbsuite/banana/Banana.py
+@@ -23,8 +23,8 @@
+     """
+     Simple overlapper
+     """
+-    r,o,e = exe(("blasr %s %s -m 5 -bestn 200 -nCandidates 200 -minMatch 12 "
+-                 "-affineExtend 3 -nproc %d -noSplitSubreads -out %s -maxScore -1000") % \
++    r,o,e = exe(("blasr %s %s -m 5 --bestn 200 --nCandidates 200 --minMatch 12 "
++                 "--affineExtend 3 --nproc %d --noSplitSubreads --out %s --maxScore -1000") % \
+                  (query, target, nproc, outname))
+ 
+ def m5ToOvlGraph(readNames, fileName):
+--- pbsuite/banana/Polish.py
++++ pbsuite/banana/Polish.py
+@@ -17,7 +17,7 @@
+     """
+     runs blasr
+     """
+-    r,o,e = exe("blasr %s %s -bestn %d -affineAlign -m 5 -nproc %d -out %s" \
++    r,o,e = exe("blasr %s %s --bestn %d --affineAlign -m 5 --nproc %d --out %s" \
+                 % (query, target, bestn, nproc, outName))
+     
+ 
+--- pbsuite/banana/OLCAssembly.py
++++ pbsuite/banana/OLCAssembly.py
+@@ -158,9 +158,9 @@
+         Takes all of the pools and generates their fastq and alignments in their own folder. 
+         """
+         logging.info("Creating Overlap")
+-        log = _exe(("blasr inputReads.fastq reference.fasta -nproc %d -m 4 " 
+-                    "-out temp.rm4 -noSplitSubreads -useGuidedAlign -allowAdjacentIndels "#-minFrac 0.01 
+-                    "-nCandidates 20 -bestn 15 -minMatch 8 -maxLCPLength 16 ") % (self.options.nproc) )
++        log = _exe(("blasr inputReads.fastq reference.fasta --nproc %d -m 4 " 
++                    "--out temp.rm4 --noSplitSubreads --useGuidedAlign --allowAdjacentIndels "#-minFrac 0.01 
++                    "--nCandidates 20 --bestn 15 --minMatch 8 --maxLCPLength 16 ") % (self.options.nproc) )
+         logging.debug(log)
+         logging.info("Sorting the alignments")
+         logging.debug(_exe("sort temp.rm4 > alignments.rm4"))
+--- pbsuite/jelly/QFix.py
++++ pbsuite/jelly/QFix.py
+@@ -16,7 +16,7 @@
+             fout.write(">%s\n%s\n" % (i.name, i.seq))
+     fout.close()
+     
+-    print exe(("blasr input.fastq ref.fasta  -bestn 2 -m 5 -noSplitSubreads > out.m5"))
++    print exe(("blasr input.fastq ref.fasta  --bestn 2 -m 5 --noSplitSubreads > out.m5"))
+     print exe(("python /stornext/snfs5/next-gen/scratch/english/Jelly/"
+                "DevJelly/branches/consensusDev/GetSubs.py out.m5 input.fastq"))
+     print exe(("python /stornext/snfs5/next-gen/scratch/english/Jelly/"
+--- pbsuite/jelly/Stages.py
++++ pbsuite/jelly/Stages.py
+@@ -56,7 +56,7 @@
+     logging.basicConfig( stream=sys.stderr, level=level, format=logFormat )
+     logging.info("Running blasr")
+     
+-    mappingTemplate = Template("blasr ${fasta} ${ref} ${sa} -m 4 -out ${outFile} ${parameters} ")
++    mappingTemplate = Template("blasr ${fasta} ${ref} ${sa} -m 4 --out ${outFile} ${parameters} ")
+     tailTemplate = Template("m4pie.py ${outFile} ${fasta} ${ref} --nproc ${nproc} -i ${extras}")
+     
+     ret = []
+@@ -79,7 +79,7 @@
+             logging.warning("Output File %s already exists and will be overwritten." % (outFile))
+         
+         #Build Blasr Command 
+-        nprocRe = re.compile("-nproc (\d+)")
++        nprocRe = re.compile("--nproc (\d+)")
+         np = nprocRe.findall(parameters + extras)
+         if len(np) == 0:
+             np = '1'
+--- pbsuite/jelly/Assembly.py
++++ pbsuite/jelly/Assembly.py
+@@ -18,8 +18,8 @@
+     """
+     Simple overlapper
+     """
+-    c = ("blasr %s %s -m %s -bestn %d -nCandidates %d -minMatch 8 -sdpTupleSize 6 -affineAlign "
+-                 "-nproc %d -noSplitSubreads -out %s -minPctIdentity 60 -minReadLength 5") % \
++    c = ("blasr %s %s -m %s --bestn %d --nCandidates %d --minMatch 8 --sdpTupleSize 6 --affineAlign "
++                 "--nproc %d --noSplitSubreads --out %s --minPctIdentity 60 --minReadLength 5") % \
+                  (query, target, fmt, bestn, nCandidates, nproc, outname)
+     logging.debug(c)
+     r,o,e = exe(c)
+--- pbsuite/jelly/m4pie.py
++++ pbsuite/jelly/m4pie.py
+@@ -75,8 +75,8 @@
+         sa = "-sa " + ref + ".sa"
+     else:
+         sa = ""
+-    cmd = ("blasr %s %s %s -nproc %d -m 4 -bestn 1 -nCandidates 20 -out %s"
+-           " -minPctIdentity 75 -sdpTupleSize 6 -noSplitSubreads") \
++    cmd = ("blasr %s %s %s --nproc %d -m 4 --bestn 1 --nCandidates 20 --out %s"
++           " --minPctIdentity 75 --sdpTupleSize 6 --noSplitSubreads") \
+            % (fq, ref, sa, nproc, out)
+     
+     logging.debug(cmd)
+--- pbsuite/honey/HSpots.pyx
++++ pbsuite/honey/HSpots.pyx
+@@ -510,7 +510,7 @@
+     
+     #map consensus to refregion
+     varSam = NamedTemporaryFile(suffix=".sam")
+-    cmd = "blasr %s %s -sam -bestn 1 -affineAlign -out %s" % (conOut.name, refOut.name, varSam.name)
++    cmd = "blasr %s %s --sam --bestn 1 --affineAlign --out %s" % (conOut.name, refOut.name, varSam.name)
+     logging.debug(cmd)
+     logging.debug(exe(cmd))
+     
+--- pbsuite/honey/HSpots.py
++++ pbsuite/honey/HSpots.py
+@@ -200,17 +200,17 @@
+     """
+     Simple mapper
+     """
+-    cmd = ("blasr %s %s %s -nproc %d -bestn 1 -out %s ") \
++    cmd = ("blasr %s %s %s --nproc %d --bestn 1 --out %s ") \
+            % (query, target, format, nproc, outname)
+     #need to figure out how to m5-pie it...maybe
+     if consensus:
+-        r, o, e = exe(cmd + " -noSplitSubreads -minMatch 5 " + \
+-                     "-nCandidates 20 -sdpTupleSize 6 -insertion 1 -deletion 1 -bestn 1")
++        r, o, e = exe(cmd + " --noSplitSubreads --minMatch 5 " + \
++                     "--nCandidates 20 --sdpTupleSize 6 --insertion 1 --deletion 1 --bestn 1")
+     else:
+-        r, o, e = exe(cmd + " -maxAnchorsPerPosition 100 "
+-               "-affineAlign -affineOpen 100 -affineExtend 0 "
+-               "-insertion 10 -deletion 10 "
+-               "-noSplitSubreads -nCandidates 20 ")
++        r, o, e = exe(cmd + " --maxAnchorsPerPosition 100 "
++               "--affineAlign --affineOpen 100 --affineExtend 0 "
++               "--insertion 10 --deletion 10 "
++               "--noSplitSubreads --nCandidates 20 ")
+         
+     logging.debug("blasr - %d - %s - %s" % (r, o, e))
+ 
+@@ -1000,7 +1000,7 @@
+             
+             #map consensus to refregion
+             varSam = NamedTemporaryFile(suffix=".sam")
+-            blasr(conOut.name, refOut.name, format="-sam", outname=varSam.name,\
++            blasr(conOut.name, refOut.name, format="--sam", outname=varSam.name,\
+                 consensus=False) #-- would this help?
+                 #or what if I fed it through leftalign?
+             #os.system("cp %s ." % (refOut.name))
+--- pbsuite/honey/bakH.py
++++ pbsuite/honey/bakH.py
+@@ -187,7 +187,7 @@
+     """
+     Simple mapper
+     """
+-    cmd = ("blasr %s %s %s -nproc %d -bestn 1 -out %s ") \
++    cmd = ("blasr %s %s %s --nproc %d --bestn 1 --out %s ") \
+            % (query, target, format, nproc, outname)
+     #need to figure out how to m5-pie it...maybe
+     if consensus:
+@@ -1013,7 +1013,7 @@
+         
+         #map consensus to refregion
+         varSam = NamedTemporaryFile(suffix=".sam")
+-        blasr(conOut.name, refOut.name, format="-sam", outname=varSam.name)
++        blasr(conOut.name, refOut.name, format="--sam", outname=varSam.name)
+             #consensus=False) -- would this help?
+             #or what if I fed it through leftalign?
+         
+--- pbsuite/honey/bampie.py
++++ pbsuite/honey/bampie.py
+@@ -11,14 +11,14 @@
+ #Edit this string to set which parameters blasr will use by default
+ #DO NOT! Set -nproc, -bestn, -clipping, or any output (e.g. -out -m 5)
+ #Remove -noSpotSubreads if your inputs are bax.h5 files [i think]
+-BLASRPARAMS = (" -affineAlign -noSplitSubreads -nCandidates 20 "
+-               "-minPctIdentity 75 -sdpTupleSize 6")
++BLASRPARAMS = (" --affineAlign --noSplitSubreads --nCandidates 20 "
++               "--minPctIdentity 75 --sdpTupleSize 6")
+ #Parameters used in the eichler experiments
+-EEBLASRPARAMS = (" -maxAnchorsPerPosition 100 -advanceExactMatches 10 "
+-               "-affineAlign -affineOpen 100 -affineExtend 0 "
+-               "-insertion 5 -deletion 5 -extend -maxExtendDropoff 20 "
+-               "-noSplitSubreads -nCandidates 20 ")
+-               #"-minPctIdentity 75 ") #didn't use this, but aybe should
++EEBLASRPARAMS = (" --maxAnchorsPerPosition 100 --advanceExactMatches 10 "
++               "--affineAlign --affineOpen 100 --affineExtend 0 "
++               "--insertion 5 --deletion 5 --extend --maxExtendDropoff 20 "
++               "--noSplitSubreads --nCandidates 20 ")
++               #"--minPctIdentity 75 ") #didn't use this, but aybe should
+                #have
+ 
+    
+@@ -42,9 +42,9 @@
+ """
+ def checkBlasrParams(bp):
+     """
+-    Ensure -bestn, -nproc, -clipping, -out are not specified
++    Ensure --bestn, --nproc, --clipping, --out are not specified
+     """
+-    args = [" -bestn ", " -nproc ", " -clipping ", " -out ", " -m "]
++    args = [" --bestn ", " --nproc ", " --clipping ", " --out ", " -m "]
+     for i in args:
+         if bp.count(i):
+             logging.error("Do not specify %s through Honey.py pie" % (i))
+@@ -57,18 +57,18 @@
+     automatically search for .sa
+     """
+     if os.path.exists(refFile+".sa"):
+-        sa = "-sa " + refFile + ".sa"
++        sa = "--sa " + refFile + ".sa"
+     else:
+         sa = ""
+     logging.info("Running Blasr")
+-    cmd = ("blasr %s %s %s -nproc %d -bestn 1 "
+-           "-sam -clipping subread -out %s ") \
++    cmd = ("blasr %s %s %s --nproc %d --bestn 1 "
++           "--sam --clipping subread --out %s ") \
+            % (inFile, refFile, sa, nproc, outFile)
+     r, o, e = exe(cmd + params)
+     
+-    #r,o,e = exe(("blasr %s %s %s -nproc %d -sam -bestn 1 -nCandidates 20 "
+-                 #"-out %s -clipping soft -minPctIdentity 75 "
+-                 #" -noSplitSubreads") % (fq, ref, sa, nproc, out))
++    #r,o,e = exe(("blasr %s %s %s --nproc %d --sam --bestn 1 --nCandidates 20 "
++                 #"--out %s --clipping soft --minPctIdentity 75 "
++                 #" --noSplitSubreads") % (fq, ref, sa, nproc, out))
+     
+     if r != 0:
+         logging.error("blasr mapping failed!")
+--- pbsuite/honey/Valid.py
++++ pbsuite/honey/Valid.py
+@@ -203,7 +203,7 @@
+     remaps reads to the provided reference (only setup for hg19 -- see 
+     global variable reference)
+     """
+-    return exe("blasr {0} {1} -sa {1}.sa -nproc 4 -out {2} -sam -bestn 1"\
++    return exe("blasr {0} {1} --sa {1}.sa --nproc 4 --out {2} --sam --bestn 1"\
+                .format(reads, reference, outName))
+     
+ @exeLog

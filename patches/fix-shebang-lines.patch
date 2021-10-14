@@ -1,0 +1,333 @@
+Description: Fix shebang lines
+ Fix invalid paths and replace usr/bin/env python with usr/bin/python.
+Author: Afif Elghraoui <afif@debian.org>
+Forwarded: no
+Last-Update: 2018-02-08
+--- pbsuite/utils/quickN50.py
++++ pbsuite/utils/quickN50.py
+@@ -1,4 +1,4 @@
+-#!/hgsc_software/python/python-2.6/bin/python
++#!/usr/bin/python3
+ import sys, math
+ 
+ def getStats(seqLengths):
+--- pbsuite/banana/chunkyBlasr.py
++++ pbsuite/banana/chunkyBlasr.py
+@@ -1,4 +1,4 @@
+-#!/usr/env/bin python
++#!/usr/bin/python3
+ 
+ import sys, os, glob, subprocess, logging
+ from string import Template
+--- pbsuite/banana/MakeOverlapTable.py
++++ pbsuite/banana/MakeOverlapTable.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ import sys, glob, re, logging, json, os
+ from optparse import OptionParser
+--- pbsuite/banana/MakeReciprocal.py
++++ pbsuite/banana/MakeReciprocal.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ import sys, glob, re
+ from optparse import OptionParser
+--- pbsuite/banana/OLCAssembly.py
++++ pbsuite/banana/OLCAssembly.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, os, tempfile, logging, subprocess, shutil, re, signal
+ from optparse import OptionParser
+ from StringIO import StringIO
+--- pbsuite/banana/Polish.py
++++ pbsuite/banana/Polish.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, re, random, argparse, textwrap, logging
+ import operator
+ from collections import defaultdict, namedtuple
+--- pbsuite/honey/ComplexResolver.py
++++ pbsuite/honey/ComplexResolver.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import itertools, copy, argparse
+ from collections import defaultdict, Counter
+ import intervaltree_bio as bio
+--- pbsuite/honey/Force.py
++++ pbsuite/honey/Force.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, argparse, re
+ from collections import defaultdict, namedtuple, Counter
+ import pysam
+--- pbsuite/honey/HSpots.py
++++ pbsuite/honey/HSpots.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import gc
+ import os
+ import re
+--- pbsuite/honey/HSpots.pyx
++++ pbsuite/honey/HSpots.pyx
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ import sys, time, re, gc, argparse, logging, bisect, math, copy, shutil, multiprocessing
+ import pysam, numpy, h5py
+--- pbsuite/honey/Honey.py
++++ pbsuite/honey/Honey.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ import argparse, sys
+ from pbsuite.utils.setupLogging import *
+--- pbsuite/honey/TGraf.py
++++ pbsuite/honey/TGraf.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, bisect, argparse, tarfile, StringIO, os, pwd
+ import grp, logging, time, copy
+ from tempfile import NamedTemporaryFile
+--- pbsuite/honey/bakH.py
++++ pbsuite/honey/bakH.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ import sys, time, re, gc, argparse, logging, bisect, math, copy, shutil, multiprocessing, os, random
+ import pysam, numpy, h5py
+--- pbsuite/honey/bampie.py
++++ pbsuite/honey/bampie.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import os, re, argparse, logging, tempfile, sys
+ from collections import defaultdict
+ import pysam
+--- pbsuite/honey/massivePhrap.py
++++ pbsuite/honey/massivePhrap.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import os
+ import sys
+ import shutil
+--- pbsuite/honey/realign.py
++++ pbsuite/honey/realign.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, re, time, logging
+ from collections import defaultdict
+ 
+--- pbsuite/honey/recallSpots.py
++++ pbsuite/honey/recallSpots.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ import sys, logging, argparse
+ import pysam
+--- pbsuite/honey/spotH5Merge.py
++++ pbsuite/honey/spotH5Merge.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, h5py, argparse
+ 
+ from pbsuite.utils.setupLogging import *
+--- pbsuite/honey/spotH5dump.py
++++ pbsuite/honey/spotH5dump.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys
+ import h5py
+ 
+--- pbsuite/honey/spotToBed.py
++++ pbsuite/honey/spotToBed.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys
+ import argparse
+ from pbsuite.utils import VCFIO
+--- pbsuite/honey/spotToVCF.py
++++ pbsuite/honey/spotToVCF.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, os, argparse
+ from pbsuite.honey.HSpots import SpotResult
+ from pbsuite.utils import VCFIO
+--- pbsuite/jelly/Assembly.py
++++ pbsuite/jelly/Assembly.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import os, sys, argparse, logging, json
+ from tempfile import NamedTemporaryFile
+ 
+--- pbsuite/jelly/Collection.py
++++ pbsuite/jelly/Collection.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ import sys, json
+ from glob import glob
+--- pbsuite/jelly/Extraction.py
++++ pbsuite/jelly/Extraction.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ import sys, glob, os, random
+ from optparse import OptionParser
+--- pbsuite/jelly/Jelly.py
++++ pbsuite/jelly/Jelly.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ """
+ document the protocol
+ """
+--- pbsuite/jelly/QFix.py
++++ pbsuite/jelly/QFix.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ from pbsuite.utils.FileHandlers import FastqFile, M5File
+ from pbsuite.utils.CommandRunner import exe
+--- pbsuite/jelly/Setup.py
++++ pbsuite/jelly/Setup.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, re, os, logging, subprocess
+ from optparse import OptionParser
+ 
+--- pbsuite/jelly/Support.py
++++ pbsuite/jelly/Support.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import re, os, sys, logging, json, copy
+ from bisect import bisect_left, bisect_right
+ from optparse import OptionParser
+--- pbsuite/jelly/m4pie.py
++++ pbsuite/jelly/m4pie.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import os, re, argparse, logging, tempfile, sys
+ from collections import defaultdict
+ 
+--- pbsuite/utils/BamStat.py
++++ pbsuite/utils/BamStat.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, json, re, logging, argparse
+ 
+ from pysam import Samfile
+--- pbsuite/utils/bamToFastq.py
++++ pbsuite/utils/bamToFastq.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import pysam, sys, argparse
+ from pbsuite.utils.FileHandlers import revComp
+ 
+--- pbsuite/utils/blasrToBed.py
++++ pbsuite/utils/blasrToBed.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys
+ from pbsuite.utils.FileHandlers import M4File, M5File
+ 
+--- pbsuite/utils/fakeQuals.py
++++ pbsuite/utils/fakeQuals.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys
+ from optparse import OptionParser
+ from FileHandlers import FastaFile
+--- pbsuite/utils/fastqDivide.py
++++ pbsuite/utils/fastqDivide.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, argparse
+ from pbsuite.utils.setupLogging import *
+ 
+--- pbsuite/utils/fastqSplit.py
++++ pbsuite/utils/fastqSplit.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ import sys
+ from optparse import OptionParser
+--- pbsuite/utils/longCCSCombine.py
++++ pbsuite/utils/longCCSCombine.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, argparse
+ from collections import defaultdict, namedtuple
+ from pbsuite.utils.FileHandlers import FastqFile
+--- pbsuite/utils/mapStats.py
++++ pbsuite/utils/mapStats.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ """
+ Parse a directory of m4 files and report mapping stats like:
+--- pbsuite/utils/mergeFaQu.py
++++ pbsuite/utils/mergeFaQu.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys
+ 
+ from pbsuite.utils.FileHandlers import mergeFastaQual
+--- pbsuite/utils/readSummary.py
++++ pbsuite/utils/readSummary.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ 
+ import argparse, json
+ from pbsuite.jelly.Jelly import JellyProtocol
+--- pbsuite/utils/summarizeAssembly.py
++++ pbsuite/utils/summarizeAssembly.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, re, math
+ from optparse import OptionParser
+ from string import Template
+--- pbsuite/utils/vcfTemplates/spotToVCF.py
++++ pbsuite/utils/vcfTemplates/spotToVCF.py
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/python3
+ import sys, os, argparse
+ from pbsuite.honey.HSpots import SpotResult
+ from pbsuite.utils import VCFIO

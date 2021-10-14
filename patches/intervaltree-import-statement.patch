@@ -1,0 +1,21 @@
+Description: Fix intervaltree_bio import statement for successor project
+ As mentioned on upstream's help forums [1], the original import statement
+ here refers to the PyInterval package. That has been succeeded by
+ intervaltree-bio. This patch adjusts the import statement to
+ work with the successor package.
+ .
+ 1. http://sourceforge.net/p/pb-jelly/discussion/pbhtiks/thread/05f86d70/#fa4b
+Author: Afif Elghraoui <afif@ghraoui.name>
+Forwarded: no
+Last-Update: 2015-12-12
+--- pbsuite/honey/ComplexResolver.py
++++ pbsuite/honey/ComplexResolver.py
+@@ -1,7 +1,7 @@
+ #!/usr/bin/env python
+ import itertools, copy, argparse
+ from collections import defaultdict, Counter
+-from intervaltree import bio
++import intervaltree_bio as bio
+ from pbsuite.utils.setupLogging import *
+ import networkx as nx
+ 

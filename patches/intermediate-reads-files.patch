@@ -1,0 +1,77 @@
+Description: work around blasr 5's strict fasta/fastq header requirement
+ blasr 5 can only produce sam/bam output if the fasta/fastq header is
+ "PacBio compatible", or in the format <string>/<number>/<number>_<number>. See
+ https://github.com/PacificBiosciences/blasr/issues/312#issuecomment-269055488
+ If blasr's input requirements for fasta and fastq files can be relaxed,
+ this patch can be dropped. Alternatively, pbsuite could be revised to
+ not store results in the fastq headers, but that is a more intrusive change.
+Author: Afif Elghraoui <afif@debian.org>
+Bug: https://sourceforge.net/p/pb-jelly/tickets/5/
+Bug-Debian: https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=844034
+Last-Update: 2016-12-28
+--- pbsuite/honey/bampie.py
++++ pbsuite/honey/bampie.py
+@@ -125,8 +125,8 @@
+ 
+             maq = int(read.mapq)
+             loc = mateplace + ":" + str(pos)
+-            fout.write("@%s_%d%s%d%s\n%s\n+\n%s\n" % (read.qname, \
+-                       maq, tai, strand, loc, seq, qal))
++            fout.write("@%d%s%d%s__%s\n%s\n+\n%s\n" % \
++                       (maq, tai, strand, loc, read.qname, seq, qal))
+                     
+         code, length = read.cigar[-1]
+         if code == 4 and length >= minLength:
+@@ -143,8 +143,8 @@
+                 qal = read.qual[-length:][::-1]
+             maq = int(read.mapq)
+             loc = mateplace + ":" + str(pos)
+-            fout.write("@%s_%d%s%d%s\n%s\n+\n%s\n" % (read.qname, \
+-                       maq, tai, strand, loc, seq, qal))
++            fout.write("@%d%s%d%s__%s\n%s\n+\n%s\n" % \
++                       (maq, tai, strand, loc, read.qname, seq, qal))
+     fout.close()
+     return nreads, ntails, nmultitails
+     
+@@ -163,7 +163,7 @@
+     prolog and eplog will only point to the primary and the primary will point to both
+     """
+         
+-    datGrab = re.compile("^(?P<rn>.*)_(?P<maq>\d+)(?P<log>[pe])(?P<strand>[01])(?P<ref>.*):(?P<pos>\d+)$")
++    datGrab = re.compile("^(?P<maq>\d+)(?P<log>[pe])(?P<strand>[01])(?P<ref>.*):(?P<pos>\d+)__(?P<rn>.*)$")
+     bout = None
+     for ibam, tbam in mappedFiles:
+         sam = pysam.Samfile(tbam, 'r')
+--- pbsuite/jelly/m4pie.py
++++ pbsuite/jelly/m4pie.py
+@@ -52,8 +52,8 @@
+             ntails += 1
+             seq   = reads[read.qname][:pTail]
+             shift = 0
+-            fout.write(">%s_%d%s%d\n%s\n" % (read.qname, \
+-                       shift, 'p', len, seq))
++            fout.write(">%d%s%d__%s\n%s\n" % \
++                       (shift, 'p', len, read.qname, seq))
+              
+         if eTail >= minLength:
+             if hasTail:
+@@ -61,8 +61,8 @@
+             ntails += 1
+             seq   = reads[read.qname][-eTail:]
+             shift = read.qend
+-            fout.write(">%s_%d%s%d\n%s\n" % (read.qname, \
+-                       shift, 'e', len, seq))
++            fout.write(">%d%s%d__%s\n%s\n" % \
++                       (shift, 'e', len, read.qname, seq))
+         
+     fout.close()
+     return nreads, ntails, nmultitails
+@@ -105,7 +105,7 @@
+     
+     prolog and eplog will only point to the primary and the primary will point to both
+     """
+-    datGrab = re.compile("^(?P<rn>.*)_(?P<shift>\d+)(?P<log>[pe])(?P<length>\d+)$")
++    datGrab = re.compile("^(?P<shift>\d+)(?P<log>[pe])(?P<length>\d+)__(?P<rn>.*)$")
+     
+     aligns = M4File(tailMapFn)
+     mode = 'a' if inplace else 'w'

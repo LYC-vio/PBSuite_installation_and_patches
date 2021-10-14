@@ -1,0 +1,17 @@
+Description: Fix syntax error in pbbanana that prevents byte-compilation
+Author: Afif Elghraoui <afif@ghraoui.name>
+Forwarded: no
+Last-Update: 2015-12-12
+--- pbsuite/banana/SeqAsm.py
++++ pbsuite/banana/SeqAsm.py
+@@ -5,8 +5,8 @@
+ 
+ USAGE= "%prog A small assembler that quickly guesses at consensus of small, completely overlapping sequences"""
+ 
+-ss = ["CGCGTACGCG",
+-     ["
++#ss = ["CGCGTACGCG",
++#     ["
+ a = "dsa jld lal"
+ b = "dsajld kll"
+ c = "dsc jle kal"

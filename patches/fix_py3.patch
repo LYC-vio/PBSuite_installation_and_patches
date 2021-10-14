@@ -1,0 +1,77 @@
+Subject: fix some py3 transition
+Description: fix some py2 to py3 port
+Author: Olivier Sallou <osallou@debian.org>
+Last-Updated: 2020-02-08
+Forwarded: no
+--- pbsuite/honey/TGraf.py
++++ pbsuite/honey/TGraf.py
+@@ -3,7 +3,6 @@
+ import grp, logging, time, copy
+ from tempfile import NamedTemporaryFile
+ from collections import Counter, defaultdict
+-from string import maketrans
+ import pysam
+ from pbsuite.utils.setupLogging import setupLogging
+ 
+@@ -69,7 +68,7 @@
+         self.epirem = getTag(read, "ES")
+         #Choose higher quality or force epilog
+         #     if we have an epi      and ((we want hq and  it's of higher quality)   or we want epi
+-        if (self.epipos is not None) and ((log == 'h' and self.epimaq > self.promaq) or log == 'e'):
++        if (self.epipos is not None and self.promaq is not None) and ((log == 'h' and self.epimaq > self.promaq) or log == 'e'):
+             foundBreak = True
+             if self.epipos <= end:
+                 s, e, a, b, uq, dq, uR, dR = (self.epipos, end, \
+@@ -272,7 +271,7 @@
+     
+     def bpStr(self):
+         def swap(a, b):
+-            trans = maketrans("<>","><")
++            trans = str.maketrans("<>","><")
+             if a in ['p','i','e']:
+                 b = b.translate(trans)[::-1]
+             elif b in ['p','i','e']:
+--- pbsuite/utils/FileHandlers.py
++++ pbsuite/utils/FileHandlers.py
+@@ -1,7 +1,6 @@
+ import re, sys, os, bisect, logging, copy
+ from collections import defaultdict
+ from io import StringIO
+-from string import maketrans
+ 
+ from networkx import draw, write_gml, write_graphml, Graph
+ 
+@@ -581,7 +580,7 @@
+ 
+ """
+ 
+-revComp = maketrans("ATCGNatcgn","TAGCNtagcn")
++revComp = str.maketrans("ATCGNatcgn","TAGCNtagcn")
+ 
+ class M5File(list):
+     
+--- pbsuite/honey/HSpots.py
++++ pbsuite/honey/HSpots.py
+@@ -554,16 +554,16 @@
+             for svstart, svsize, svtype in expandCigar(align, args.minIndelErr, EXPLORECOLLAPSE):
+                 if svstart >= offset and svstart <= offset + regsize:
+                     if svtype == "MAT":#depricated
+-                        begin = max(0, svstart - svsize - offset)
+-                        end = min(begin - offset, container.shape[1])
++                        begin = int(max(0, svstart - svsize - offset))
++                        end = int(min(begin - offset, container.shape[1]))
+                         container[MAT, begin:end] += BIGINTY(1)
+                     elif svtype == "DEL":
+-                        begin = max(0, svstart - offset)
+-                        end = min(begin + svsize, container.shape[1])
++                        begin = int(max(0, svstart - offset))
++                        end = int(min(begin + svsize, container.shape[1]))
+                         container[DEL, begin:end] += BIGINTY(1)
+                     elif svtype == "INS":
+-                        begin = max(0, svstart - (svsize/2) - offset)
+-                        end = min(begin + (svsize/2), container.shape[1])
++                        begin = int(max(0, svstart - (svsize/2) - offset))
++                        end = int(min(begin + (svsize/2), container.shape[1]))
+                         container[INS, begin:end] += BIGINTY(1)
+                      
+         logging.debug("%d reads filtered for low mapq in %s" % (mqFilt, self.groupName))

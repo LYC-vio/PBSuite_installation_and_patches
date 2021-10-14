@@ -1,0 +1,37 @@
+Description: Adjust pbhoney example script for Debian
+ * Use /bin/sh rather than /bin/bash (unnecessarily)
+ * s/Honey.py/Honey/
+ * Fix error in example
+ (reference parameter doesn't exist for one command but is required for another)
+ * Replace sam2bam script (not packaged) with the actual samtools commands
+Author: Afif Elghraoui <afif@ghraoui.name>
+Forwarded: no
+Last-Update: 2016-02-08
+--- docs/honeyExample/workflow.sh
++++ docs/honeyExample/workflow.sh
+@@ -1,18 +1,20 @@
+-#!/bin/bash
++#!/bin/sh
+ 
+ #Set the inputReads and reference -- change at your leisure
+ inputReads=filtered_subreads.fastq
+ reference=lambda_modified.fasta
+ 
+ echo "PIEMapping"
+-Honey.py pie $inputReads $reference
++Honey pie $inputReads $reference -o mappingFinal.sam
+ 
+ echo "Sam To Bam"
+-sam2bam $reference mapping.tails.sam
++samtools view -bt $reference mappingFinal.sam |
++    samtools sort - > mappingFinal.bam
++samtools index mappingFinal.bam
+ 
+ echo "Calling Tails"
+-Honey.py tails mappingFinal.bam --reference $reference
++Honey tails mappingFinal.bam
+ 
+ echo "Calling Spots"
+-Honey.py spots mappingFinal.bam
++Honey spots --reference $reference mappingFinal.bam
+ 

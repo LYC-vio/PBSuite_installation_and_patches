@@ -1,0 +1,1601 @@
+--- pbsuite/banana/Banana.py
++++ pbsuite/banana/Banana.py
+@@ -51,7 +51,7 @@
+         else: 
+             fdict[name] = align
+     
+-    alignments = fdict.values()
++    alignments = list(fdict.values())
+     #make edges for all overlaps
+     for align in alignments:
+         if align.qname == align.tname:
+@@ -124,15 +124,15 @@
+             continue
+         for i in p:
+             if not i.tname.startswith("ref"):
+-                print i.tname.split('/')[1],i.tstrand,"\t",
++                print(i.tname.split('/')[1],i.tstrand,"\t", end=' ')
+             else:
+-                print i.tname,i.tstrand,"\t",
+-        print
++                print(i.tname,i.tstrand,"\t", end=' ')
++        print()
+     
+ if __name__ == '__main__':
+     reads = sys.argv[1]
+     fasta = FastaFile(reads)
+     #blasr(reads, reads, 4)
+-    ovl = m5ToOvlGraph(fasta.keys(), "out.m5")
++    ovl = m5ToOvlGraph(list(fasta.keys()), "out.m5")
+     ovlSimplify(ovl)
+     nx.write_gml(ovl, "ovl.gml")
+--- pbsuite/banana/MakeOverlapTable.py
++++ pbsuite/banana/MakeOverlapTable.py
+@@ -205,7 +205,7 @@
+                       "[DEFAULT=off]"))
+         parser.add_option("-l", "--lengthMin", type="int", default=0, \
+                 help="Ignore reads (query or target) less than specified length [DEFAULT=off]")
+-        parser.add_option("-b", "--bestn", type="int", default=sys.maxint, \
++        parser.add_option("-b", "--bestn", type="int", default=sys.maxsize, \
+                 help=("Report only the top bestn alignment scores for a query"
+                       " [DEFAULT=all]"))
+         parser.add_option("-e", "--extends", action="store_true", \
+--- pbsuite/banana/MakeReciprocal.py
++++ pbsuite/banana/MakeReciprocal.py
+@@ -2,7 +2,7 @@
+ 
+ import sys, glob, re
+ from optparse import OptionParser
+-from StringIO import StringIO
++from io import StringIO
+ 
+ from pbsuite.utils.setupLogging import *
+ USAGE = """%prog <chunk> <stride>
+@@ -25,7 +25,7 @@
+         for line in self.fileHandler.readlines():
+             try:
+                 self.append(M4Line(line.strip()))
+-            except TypeError, err:
++            except TypeError as err:
+                 sys.stderr.write("BadM4Line! \n%s\n%s\n" % (line, str(err)) )
+                 sys.exit(1)
+             
+--- pbsuite/banana/OLCAssembly.py
++++ pbsuite/banana/OLCAssembly.py
+@@ -1,7 +1,7 @@
+ #!/usr/bin/python3
+ import sys, os, tempfile, logging, subprocess, shutil, re, signal
+ from optparse import OptionParser
+-from StringIO import StringIO
++from io import StringIO
+ 
+ from pbsuite.utils.setupLogging import *
+ from pbsuite.utils.FileHandlers import *
+@@ -115,7 +115,7 @@
+         logging.info("Creating FastQ")
+         self.sequences = []
+         
+-        for key in self.fasta.keys():
++        for key in list(self.fasta.keys()):
+             self.sequences.append(FastQ(key, self.fasta[key], self.qualToPhred(self.qual[key]) ) )
+         
+         #Sort Because blas's inconsistency. -- They're fixing it. Take this out when the fix is released
+@@ -147,7 +147,7 @@
+         """
+         fq = open("inputReads.fastq",'w')
+         fa = open("reference.fasta",'w')
+-        for key in self.fastqSeq.keys():
++        for key in list(self.fastqSeq.keys()):
+             fq.write(str(self.fastqSeq[key]))
+             fa.write(">%s\n%s\n" % (key, self.fastqSeq[key].seq))
+         fa.close()
+@@ -269,7 +269,7 @@
+         
+         if self.options.fqOut:
+             fout = open(self.options.outName + ".fastq", 'w')
+-            for entry in mergeFastaQual(self.options.outName+".fasta", self.options.outName+".qual").values():
++            for entry in list(mergeFastaQual(self.options.outName+".fasta", self.options.outName+".qual").values()):
+                 fout.write(entry.toString())
+             fout.close()
+             
+@@ -278,7 +278,7 @@
+         fh = open("internal.ids",'r')
+         n = fh.readlines()
+         fh.close()
+-        p = map(lambda x: list(), range(m))
++        p = [list() for x in range(m)]
+         index = 0
+         for item in n:
+             p[index].append(item)
+@@ -287,7 +287,7 @@
+             else:
+                 index = 0
+         ret = []
+-        for pos, i in enumerate(filter(lambda x: len(x)>0, p)):
++        for pos, i in enumerate([x for x in p if len(x)>0]):
+             spName = "splitCon%d.iids" % (pos)
+             ret.append(spName)
+             fout = open(spName, 'w')
+@@ -343,7 +343,7 @@
+         """
+         Given list of Integers that represent base phred scores, return the phred encoding
+         """
+-        return "".join(map(lambda x: chr(x+33), quals))
++        return "".join([chr(x+33) for x in quals])
+     
+     def makeFasta(self, fastq):
+         """
+--- pbsuite/banana/Polish.py
++++ pbsuite/banana/Polish.py
+@@ -73,10 +73,10 @@
+     
+     if len(aligns) > 500:#hard limit
+         keep = []
+-        scores = map(lambda x: x.score, aligns)
++        scores = [x.score for x in aligns]
+         scores.sort()
+         minS = scores[499]
+-        aligns = filter(lambda x: x.score <= minS, aligns)
++        aligns = [x for x in aligns if x.score <= minS]
+         
+     seqs = []
+     for i in aligns:
+@@ -113,7 +113,7 @@
+     fillBases = 0
+     if len(seqs) == 0:
+         logging.info("no sequences")
+-    for p in range(max(map(lambda x: len(x[0]), seqs))):
++    for p in range(max([len(x[0]) for x in seqs])):
+         cnt = defaultdict(int)
+         #Count it
+         for s in seqs:
+@@ -122,7 +122,7 @@
+         cnt[" "] = 0
+         contribBases += sum(cnt.values())
+         #Maximum count
+-        nuc = max(cnt.iteritems(), key=operator.itemgetter(1))[1]
++        nuc = max(iter(cnt.items()), key=operator.itemgetter(1))[1]
+         #Who all has maximum count
+         n = []
+         for j in cnt:
+@@ -155,7 +155,7 @@
+     parser.add_argument("-s", "--super", dest="super", action="store_true",\
+                         help="Treat each read as the target once")
+     
+-    parser.add_argument("-m", "--maxtail", type = int, default=sys.maxint, \
++    parser.add_argument("-m", "--maxtail", type = int, default=sys.maxsize, \
+                         help="Max number of bases allowed to be in tail (inf)")
+     
+     parser.add_argument("-n", "--nproc", dest="nproc", default=1, type=int,\
+@@ -172,7 +172,7 @@
+     #I don't think this is exhaustive
+     if (args.target is not None and args.Target is not None) \
+        or (args.super and (args.target is not None or args.Target is not None)):
+-        print "Error! only specify one of --super or --target or --Target"
++        print("Error! only specify one of --super or --target or --Target")
+         exit(1)
+     
+     return args
+--- pbsuite/banana/SeqAsm.py
++++ pbsuite/banana/SeqAsm.py
+@@ -22,6 +22,6 @@
+     for j in range(i+1,len(ss)):    
+         y = ss[j]
+         s.set_seq2(y)   
+-        print
+-        print s.ratio()
+-        print s.get_matching_blocks()
++        print()
++        print(s.ratio())
++        print(s.get_matching_blocks())
+--- pbsuite/honey/Force.py
++++ pbsuite/honey/Force.py
+@@ -533,7 +533,7 @@
+     if search is not None:
+         d = search.groupdict()
+     else:
+-        print "problem parsing", data
++        print("problem parsing", data)
+         return 'prob'
+ 
+     if d["ref"] == '?':
+--- pbsuite/honey/HSpots.py
++++ pbsuite/honey/HSpots.py
+@@ -94,7 +94,7 @@
+         if k * 2 > n:
+             k = n - k
+             
+-        for  d in xrange(1,k+1):
++        for  d in range(1,k+1):
+             r += math.log(n, 10)
+             r -= math.log(d, 10)
+             n -= 1
+@@ -704,7 +704,7 @@
+         starts = truth & ~shift
+         ends = ~truth & shift
+         
+-        points = zip(numpy.nonzero(starts)[0], numpy.nonzero(ends)[0])
++        points = list(zip(numpy.nonzero(starts)[0], numpy.nonzero(ends)[0]))
+         npoints = []
+         if len(points) == 0:
+             return npoints
+@@ -1131,12 +1131,12 @@
+         gotoQueue = tasks
+ 
+     #ErrorCounting
+-    errConsumers = [ Consumer(tasks, results, args.bam, args.reference, honH5) for i in xrange(args.nproc) ]
++    errConsumers = [ Consumer(tasks, results, args.bam, args.reference, honH5) for i in range(args.nproc) ]
+     for w in errConsumers:
+         w.start()
+            
+     num_jobs = 0
+-    for groupName, chrom, start, end in regions.values():
++    for groupName, chrom, start, end in list(regions.values()):
+         gotoQueue.put(ErrorCounter( groupName, chrom, start, end, args))
+         num_jobs += 1
+                
+@@ -1187,7 +1187,7 @@
+                             readFile.write("\n".join(['ref ' + j for j in x.refReads]) + '\n')
+     
+     #Poison the Consumers.. I'm done with them
+-    for i in xrange(args.nproc):
++    for i in range(args.nproc):
+         tasks.put(None)
+     
+     logging.info("Finished")
+@@ -1230,13 +1230,13 @@
+         consen(bam, reference, 'none')
+         for i in consen.newSpots:
+             i.tags["seqmade"] = True
+-            print i
++            print(i)
+         if len(consen.newSpots) == 0:
+             spot.tags["noseq"] = True
+-            print str(spot)
++            print(str(spot))
+     else:
+         spot.tags["filtfail"] = True
+-        print str(spot)
++        print(str(spot))
+     #done with test code
+     logging.info("Finished testing")
+     
+--- pbsuite/honey/Honey.py
++++ pbsuite/honey/Honey.py
+@@ -31,7 +31,7 @@
+             formatter_class=argparse.RawDescriptionHelpFormatter)
+ 
+     #parser.add_argument("-h", "--help", action="store_true")
+-    parser.add_argument("stage", metavar="STAGE", choices=STAGES.keys(), type=str, \
++    parser.add_argument("stage", metavar="STAGE", choices=list(STAGES.keys()), type=str, \
+                         help="Stage to execute")
+     parser.add_argument("options", metavar="OPTIONS", nargs=argparse.REMAINDER,\
+                          help="Options to pass to the stage")
+--- pbsuite/honey/SVMachines.py
++++ pbsuite/honey/SVMachines.py
+@@ -65,7 +65,7 @@
+             t = fh.readline(); t = fh.readline()
+             for line in fh.readlines():
+                 data = line.strip().split()
+-                ret[int(data[0])] = map(float, data[1:])
++                ret[int(data[0])] = list(map(float, data[1:]))
+         self.ranges = ret
+      
+     def predict(self, x):
+@@ -103,11 +103,11 @@
+ 
+         ret = numpy.zeros( len(x[0]) )
+         
+-        index_range = range(1, len(x)+1)
++        index_range = list(range(1, len(x)+1))
+         nelem = len(index_range) + 1
+         
+         dec_values = (c_double * nr_classifier)()
+-        for pos in xrange(len(x[0])):
++        for pos in range(len(x[0])):
+             #apply across axis?
+             data = (svm_node * nelem)()
+             data[-1].index = -1
+@@ -145,7 +145,7 @@
+                     ret[pos] = lower + (upper-lower) * (i - minimum) / (maximum - minimum)
+             return ret
+         
+-        for i in xrange(len(ranges.keys())):
++        for i in range(len(list(ranges.keys()))):
+             attribute = i + 1
+             minimum, maximum = ranges[attribute]
+             instances[i] = numpy.apply_along_axis(getVal, 0, instances[i])
+@@ -169,7 +169,7 @@
+         for attribute in range(1, max_attribute + 1) :  # we iterate on the attributes
+             column = []
+             for instance in normalized_instances:
+-                if attribute not in instance.keys():
++                if attribute not in list(instance.keys()):
+                     instance[attribute] = 0.
+                 column.append(instance[attribute])
+             if ranges != None :
+--- pbsuite/honey/TGraf.py
++++ pbsuite/honey/TGraf.py
+@@ -1,5 +1,5 @@
+ #!/usr/bin/python3
+-import sys, bisect, argparse, tarfile, StringIO, os, pwd
++import sys, bisect, argparse, tarfile, io, os, pwd
+ import grp, logging, time, copy
+ from tempfile import NamedTemporaryFile
+ from collections import Counter, defaultdict
+@@ -370,11 +370,11 @@
+ 
+         I'm going to create a mode average median of the breaks
+         """
+-        upstream = map(lambda x: x.uBreak, self.breads)
++        upstream = [x.uBreak for x in self.breads]
+         self.upPos = Counter(upstream).most_common()
+         self.avgUpPos = sum(upstream)/len(upstream)
+         
+-        dnstream = map(lambda x: x.dBreak, self.breads)
++        dnstream = [x.dBreak for x in self.breads]
+         self.dnPos = Counter(dnstream).most_common()
+         self.avgDnPos = sum(dnstream)/len(dnstream)
+         
+@@ -452,8 +452,8 @@
+         
+         #This should be in a method...
+         
+-        self.uMapq = sum(map(lambda x: x.uMapq, self.breads)) / len(self.breads)
+-        self.dMapq = sum(map(lambda x: x.dMapq, self.breads)) / len(self.breads)
++        self.uMapq = sum([x.uMapq for x in self.breads]) / len(self.breads)
++        self.dMapq = sum([x.dMapq for x in self.breads]) / len(self.breads)
+         
+         readData = set() #getBPstr
+         for i in self.breads:
+@@ -519,7 +519,7 @@
+         for key in t:
+             tlocs[key].extend(t[key])
+             
+-        if len(ret.keys()) != 0:
++        if len(list(ret.keys())) != 0:
+             yield ret
+         
+         del(ret)
+@@ -528,7 +528,7 @@
+         logging.info("Parsing %s" % refKey)
+         ret, x = parseBreakReads(tlocs[refKey], getrname, minMapq, True)
+         logging.debug(ret)
+-        if refKey in ret.keys():
++        if refKey in list(ret.keys()):
+             yield {refKey:ret[refKey]};#len(ret.keys()) == 0:
+             del(ret)
+ 
+@@ -568,7 +568,7 @@
+                 logging.debug("read %s mapq is too low (uMapq %d - dMapq %d)" % (read.qname, pan.uMapq, pan.dMapq))
+                 continue
+             
+-            if refKey not in ret.keys():
++            if refKey not in list(ret.keys()):
+                 ret[refKey] = []
+             clist = ret[refKey]
+             #point = bisect.bisect_left(clist, pan)
+@@ -686,7 +686,7 @@
+     clu = 0
+     for retDict in makeBreakReads(bam, minMapq=args.minMapq):
+         points = retDict
+-        chrom = retDict.keys()[0]
++        chrom = list(retDict.keys())[0]
+         #print "chrom", i, "-", len(points[i]),"clusters"
+         logging.info("Chrom %s made %d pre-filter clusters" % (chrom, len(points[chrom])))
+         postCnt = 0
+@@ -699,7 +699,7 @@
+             postCnt += 1
+             fout.write(str(clu) + "\t" + chrom + "\t" + j.toPrettyStr()+"\n")
+             if args.fastq:
+-                fastq = StringIO.StringIO()
++                fastq = io.StringIO()
+                 tfn = NamedTemporaryFile(suffix=".bam", delete=False).name
+                 align = pysam.Samfile(tfn, 'wb', template=bam)
+                 for r in j.breads:
+--- pbsuite/honey/Valid.py
++++ pbsuite/honey/Valid.py
+@@ -161,7 +161,7 @@
+     writes the fastqs to fn
+     """
+     fout = open(fn, 'w')
+-    for i in fastq.values():
++    for i in list(fastq.values()):
+         fout.write(i.toString())
+     fout.close()
+     
+@@ -277,7 +277,7 @@
+                         help="VCF containing sites to be validated")
+     parser.add_argument("-s", "--formatsam", dest="formatsam", action="store_true",\
+                         help="Reformat the input BAM's sequence names in-place")
+-    parser.add_argument("-m", "--maxdepth", dest="maxdepth", default=sys.maxint, \
++    parser.add_argument("-m", "--maxdepth", dest="maxdepth", default=sys.maxsize, \
+                         help="Downsample to a maximum depth per site")
+     parser.add_argument("-d", "--debug", dest="debug", action="store_true",\
+                         help="Print verbose logging")
+--- pbsuite/honey/bakH.py
++++ pbsuite/honey/bakH.py
+@@ -81,7 +81,7 @@
+         if k * 2 > n:
+             k = n - k
+             
+-        for  d in xrange(1,k+1):
++        for  d in range(1,k+1):
+             r += math.log(n, 10)
+             r -= math.log(d, 10)
+             n -= 1
+@@ -695,7 +695,7 @@
+         starts = truth & ~shift
+         ends = ~truth & shift
+         
+-        points = zip(numpy.nonzero(starts)[0], numpy.nonzero(ends)[0])
++        points = list(zip(numpy.nonzero(starts)[0], numpy.nonzero(ends)[0]))
+         npoints = []
+         if len(points) == 0:
+             return npoints
+@@ -993,7 +993,7 @@
+         #we don't have a consensus - retry
+         if len(con) == 0:
+             logging.debug("Trying another seed read for consensus")
+-            con = results.values()[0].seq
++            con = list(results.values())[0].seq
+         logging.debug("%s %d bp seq" % (conName, len(con.split('\n')[1])))
+         
+         #try improving consensus
+@@ -1125,12 +1125,12 @@
+         gotoQueue = tasks
+ 
+     #ErrorCounting
+-    errConsumers = [ Consumer(tasks, results, args.bam, args.reference, honH5) for i in xrange(args.nproc) ]
++    errConsumers = [ Consumer(tasks, results, args.bam, args.reference, honH5) for i in range(args.nproc) ]
+     for w in errConsumers:
+         w.start()
+            
+     num_jobs = 0
+-    for groupName, chrom, start, end in regions.values():
++    for groupName, chrom, start, end in list(regions.values()):
+         gotoQueue.put(ErrorCounter( groupName, chrom, start, end, args))
+         num_jobs += 1
+                
+@@ -1181,7 +1181,7 @@
+                             readFile.write("\n".join(['ref ' + j for j in x.refReads]) + '\n')
+     
+     #Poison the Consumers.. I'm done with them
+-    for i in xrange(args.nproc):
++    for i in range(args.nproc):
+         tasks.put(None)
+     
+     logging.info("Finished")
+@@ -1220,13 +1220,13 @@
+             consen(bam, reference, 'none')
+             for i in consen.newSpots:
+                 i.tags["seqmade"] = True
+-                print i
++                print(i)
+             if len(consen.newSpots) == 0:
+                 spot.tags["noseq"] = True
+-                print str(spot)
++                print(str(spot))
+         else:
+             spot.tags["filtfail"] = True
+-            print str(spot)
++            print(str(spot))
+     
+     #done with test code
+     logging.info("Finished testing")
+--- pbsuite/honey/bampie.py
++++ pbsuite/honey/bampie.py
+@@ -371,7 +371,7 @@
+                 fh.close()
+                 temp = list(argv)
+                 temp.insert(0, fh.name)
+-                print "Honey.py pie " + " ".join(temp)
++                print("Honey.py pie " + " ".join(temp))
+             else:
+                 logging.debug("Mapping %s" % ifile)
+                 #Need to put this in a tempFile
+--- pbsuite/honey/massivePhrap.py
++++ pbsuite/honey/massivePhrap.py
+@@ -234,7 +234,7 @@
+         if len(reads) > self.args.maxreads:
+             logging.info("Downsampling %s" % (self.data.name))
+             nreads = {}
+-            for i in random.sample(reads.keys(), self.args.maxreads):
++            for i in random.sample(list(reads.keys()), self.args.maxreads):
+                 nreads[i] = reads[i]
+             reads = nreads
+         
+@@ -249,7 +249,7 @@
+                              max(0, self.data.end - self.buffer), self.data.end +
+                              self.buffer, trim=True))
+              
+-        reads = reads.values() 
++        reads = list(reads.values()) 
+         totReads = len(reads)
+         
+         #Assemble
+@@ -746,7 +746,7 @@
+     # Start consumers
+     num_consumers = args.nproc
+     consumers = [ Consumer(tasks, results, args)
+-                    for i in xrange(num_consumers) ]
++                    for i in range(num_consumers) ]
+     for w in consumers:
+         w.start()
+     
+@@ -791,7 +791,7 @@
+     
+     
+     # Add a poison pill for each consumer
+-    for i in xrange(num_consumers):
++    for i in range(num_consumers):
+         tasks.put(None)
+     
+     logging.info("%d Tasks" % (num_jobs))
+--- pbsuite/honey/realign.py
++++ pbsuite/honey/realign.py
+@@ -219,6 +219,6 @@
+         count += 1
+         if (count / f.mapped) > n:
+             n += 0.05
+-            print "[%s] -- parsed %d of %d reads (%.2f)" % (time.asctime(), int(count), f.mapped, count/f.mapped )
++            print("[%s] -- parsed %d of %d reads (%.2f)" % (time.asctime(), int(count), f.mapped, count/f.mapped ))
+         
+     out.close()
+--- pbsuite/honey/recallSpots.py
++++ pbsuite/honey/recallSpots.py
+@@ -15,8 +15,8 @@
+ bam = pysam.Samfile(args.bam)
+ tsp = 0
+ makeKernals(args.binsize)
+-print "#CHROM\tOUTERSTART\tSTART\tINNERSTART\tINNEREND\tEND\tOUTEREND\tTYPE\tSIZE\tINFO"
+-for chrom in f.keys():
++print("#CHROM\tOUTERSTART\tSTART\tINNERSTART\tINNEREND\tEND\tOUTEREND\tTYPE\tSIZE\tINFO")
++for chrom in list(f.keys()):
+     logging.info("Calling %s" % (chrom))
+     container = f[chrom]["data"]
+     start = f[chrom].attrs["start"]
+@@ -41,7 +41,7 @@
+             continue
+         
+         fspot += 1
+-        print spot
++        print(spot)
+     tsp += fspot
+     logging.info("Found %d spots" % (fspot))
+ logging.info("Finished %d spots" % (tsp))
+--- pbsuite/honey/spotH5Merge.py
++++ pbsuite/honey/spotH5Merge.py
+@@ -20,23 +20,23 @@
+     output = h5py.File(args.output, 'w')
+     loadCols = True
+     for fn in args.spots:
+-        print fn
++        print(fn)
+         newData = h5py.File(fn,'r')
+         
+         if loadCols:
+             output.attrs["columns"] = newData.attrs["columns"]
+             loadCols = False
+             
+-        for group in newData.keys():
+-            if group not in output.keys():
++        for group in list(newData.keys()):
++            if group not in list(output.keys()):
+                 myGroup = output.create_group(group)
+                 #could put a check here that attrs are the same...
+-                for attr in newData[group].attrs.keys():
++                for attr in list(newData[group].attrs.keys()):
+                     output.attrs[attr] = newData[group].attrs[attr]
+                 data = myGroup.create_dataset("data", data=newData[group]["data"], compression="gzip")
+-                print "setup", group
++                print("setup", group)
+             else:
+-                print "merge", group
++                print("merge", group)
+                 data = newData[group]["data"].value + output[group]["data"].value
+                 output[group]["data"].write_direct(source=data)
+     
+--- pbsuite/honey/spotH5dump.py
++++ pbsuite/honey/spotH5dump.py
+@@ -5,7 +5,7 @@
+ #view with chr:start-end
+ if __name__ == '__main__':
+     h5 = h5py.File(sys.argv[1])
+-    print "chrom\tposition\t"+"\t".join(h5.attrs["columns"])
+-    for chrom in h5.keys():
++    print("chrom\tposition\t"+"\t".join(h5.attrs["columns"]))
++    for chrom in list(h5.keys()):
+         for pos,i in enumerate(h5["/%s/data" % chrom].value.transpose().tolist()):
+-            print chrom + "\t" + str(pos) + '\t' + "\t".join(map(str, i)) 
++            print(chrom + "\t" + str(pos) + '\t' + "\t".join(map(str, i))) 
+--- pbsuite/honey/spotToBed.py
++++ pbsuite/honey/spotToBed.py
+@@ -30,7 +30,7 @@
+             continue
+         chrom, s, e, type, size, info = line.strip().split('\t')
+         name = "%s.%s" % (type, size)
+-        print "\t".join([chrom, s, e, name, type, size])
++        print("\t".join([chrom, s, e, name, type, size]))
+     fh.close()
+             
+             
+--- pbsuite/honey/spotToVCF.py
++++ pbsuite/honey/spotToVCF.py
+@@ -59,7 +59,7 @@
+     
+        
+     for i in vcfout:
+-        print i
++        print(i)
+             
+     fh.close()
+ 
+--- pbsuite/jelly/Assembly.py
++++ pbsuite/jelly/Assembly.py
+@@ -82,7 +82,7 @@
+     for a in aligns2:
+         #get the carryon info
+         name, direct, se = a.qname.split("_::_")
+-        pos, length = map(int, se.split(','))
++        pos, length = list(map(int, se.split(',')))
+         #correct it's information
+         a.qname = name
+         a.qseqlength = length
+@@ -278,7 +278,7 @@
+     for a in M4File(alignmentFile):
+         aligns[a.qname].append(a)
+                
+-    aligns = aligns.values()
++    aligns = list(aligns.values())
+     reads = FastqFile(readsFile)
+     
+     stats = createStats()
+@@ -537,7 +537,7 @@
+                 return 
+         else:
+             logging.info("no mapping... picking span seq")
+-            sequence = FastaFile(data.spanSeed).values()[0]
++            sequence = list(FastaFile(data.spanSeed).values())[0]
+             data.stats["fillSeq"] = sequence
+             data.stats["contribSeqs"] = 1
+             data.stats["contribBases"] = len(sequence)
+@@ -575,7 +575,7 @@
+                 flank1Success = True
+         else:
+             logging.info("no mapping... picking f1 seq")
+-            sequence = FastaFile(data.flank1Seed).values()[0]
++            sequence = list(FastaFile(data.flank1Seed).values())[0]
+             data.stats["extendSeq1"] = sequence
+             data.stats["contribSeqs"] = 1
+             data.stats["contribBases"] = len(sequence)
+@@ -601,7 +601,7 @@
+                 flank2Success = True
+         else:
+             logging.info("no mapping... picking f1 seq")
+-            sequence = FastaFile(data.flank2Seed).values()[0]
++            sequence = list(FastaFile(data.flank2Seed).values())[0]
+             data.stats["extendSeq2"] = sequence
+             data.stats["contribSeqs"] = 1
+             data.stats["contribBases"] = len(sequence)
+@@ -727,7 +727,7 @@
+         #print str(i)
+     
+     best2 = {}#best of targets
+-    for i in best.values():
++    for i in list(best.values()):
+         score = 0
+         if i.tname in best2:
+             score = best2[i.tname].score
+@@ -739,7 +739,7 @@
+     
+ 
+     best3 = {}#best of both
+-    for i in best2.values():
++    for i in list(best2.values()):
+         keys = [i.qname, i.tname]
+         keys.sort()
+         keys = "".join(keys)
+@@ -755,7 +755,7 @@
+     reads = FastqFile(inputFastq)
+     fout = open(inputFastq, 'a')
+     count = 0
+-    for i in best3.values():
++    for i in list(best3.values()):
+         qseq = None
+         if i.support == SUPPORTFLAGS.left:
+             if i.qstrand == '0':
+--- pbsuite/jelly/Collection.py
++++ pbsuite/jelly/Collection.py
+@@ -19,7 +19,7 @@
+     """
+     a = a.replace('/','.')
+     b = b.replace('/','.')
+-    j = filter(lambda x: x != "", [a,b])
++    j = [x for x in [a,b] if x != ""]
+     j.sort()
+     return "_".join(j)
+ 
+@@ -60,7 +60,7 @@
+         self.seed2ExtendSeq = FastqEntry(None,"", "")
+         self.sameStrand = self.seed1Name[-1] != self.seed2Name[-1]
+         
+-        if data.has_key("predictedGapSize"):
++        if "predictedGapSize" in data:
+             self.predictedGapSize = data["predictedGapSize"]
+         else:
+             self.predictedGapSize = None
+@@ -527,14 +527,14 @@
+             for a,b in myGraph.edges():
+                 name = makeFilMetName(a,b)
+                 if "Contig" in myGraph.edge[a][b]['evidence']:
+-                    if name in self.allMetrics.keys():
++                    if name in list(self.allMetrics.keys()):
+                         #circles...
+                         del(self.allMetrics[name])
+                 elif "Scaffold" in myGraph.edge[a][b]['evidence']:
+-                    if name in self.allMetrics.keys():
++                    if name in list(self.allMetrics.keys()):
+                         myGraph.node[a]['trim'] = self.allMetrics[name].getTrim(a)
+                         myGraph.node[b]['trim'] = self.allMetrics[name].getTrim(b)
+-                elif name not in self.allMetrics.keys():
++                elif name not in list(self.allMetrics.keys()):
+                     logging.debug("Breaking %s due to assembly failure" %  name)
+                     myGraph.remove_edge(a, b)
+                 elif not self.allMetrics[name].span:
+@@ -554,7 +554,7 @@
+                     bestSpanScore = 0
+                     for edge in myGraph.edge[node]:
+                         name = makeFilMetName(node,edge)
+-                        if name in self.allMetrics.keys():
++                        if name in list(self.allMetrics.keys()):
+                             data = self.allMetrics[name]
+                             seq = data.getSequence()
+                             if seq is None:
+@@ -603,13 +603,13 @@
+                     if "Contig" in myGraph.edge[node][edge]['evidence']:
+                         continue
+                     name = makeFilMetName(node,edge)
+-                    if name not in self.allMetrics.keys():
++                    if name not in list(self.allMetrics.keys()):
+                         myGraph.node[node]['trim'] = 0
+                         myGraph.node[edge]['trim'] = 0
+                         continue
+                     myGraph.node[node]['trim'] = self.allMetrics[name].getTrim(node)
+                     myGraph.node[edge]['trim'] = self.allMetrics[name].getTrim(edge)
+-                if node in self.allMetrics.keys() and 'trim' not in myGraph.node[node].keys():
++                if node in list(self.allMetrics.keys()) and 'trim' not in list(myGraph.node[node].keys()):
+                     myGraph.node[node]['trim'] = self.allMetrics[node].getTrim(node)
+                     
+             #Getting the contig paths
+@@ -752,7 +752,7 @@
+             curQual = []
+             name = makeFilMetName(start, "")
+             #First guy's extender
+-            if name in self.allMetrics.keys():
++            if name in list(self.allMetrics.keys()):
+                 logging.debug("First Extender %s" % name)
+                 data = self.allMetrics[name]
+                 seq = data.getExtendSequence(name)
+@@ -788,7 +788,7 @@
+                     liftTracker.append((name, strand, len(seq.seq)))
+                 #We have to, at the very least, keep a gap in the sequence
+                 elif "Scaffold" in graph.edge[nodeA][nodeB]['evidence'] and \
+-                                name not in self.allMetrics.keys():
++                                name not in list(self.allMetrics.keys()):
+                     logging.debug("unimproved gap")
+                     #keep mat orientation the same
+                     a = nodeA[nodeA.rindex('.')+1:-2]
+@@ -800,7 +800,7 @@
+                     curQual.append("!"*gapSize)
+                     liftTracker.append((name, '?', gapSize))
+                 elif "Scaffold" in graph.edge[nodeA][nodeB]['evidence'] and \
+-                                name in self.allMetrics.keys():
++                                name in list(self.allMetrics.keys()):
+                     logging.debug("improved gap")
+                     data = self.allMetrics[name]
+                     seq = data.getSequence()
+@@ -851,7 +851,7 @@
+                     
+             name = makeFilMetName(end, "")
+             #Final guy's extender
+-            if name in self.allMetrics.keys():
++            if name in list(self.allMetrics.keys()):
+                 data = self.allMetrics[name]
+                 seq = data.getExtendSequence(name)
+                 strand = '+'
+--- pbsuite/jelly/Extraction.py
++++ pbsuite/jelly/Extraction.py
+@@ -153,7 +153,7 @@
+             if inputFile.lower().endswith(".fastq"):
+                 inputReads = FastqFile(inputFile)
+                 #spaces in the read names...
+-                for i in inputReads.keys(): #protecting for spaces
++                for i in list(inputReads.keys()): #protecting for spaces
+                     inputReads[i.split(' ')[0]] = inputReads[i]
+                     inputReads[i.split(' ')[0]].name = i.split(' ')[0]
+                     #This messes up the names a tiny bit permanently since we're pointing
+@@ -165,9 +165,9 @@
+                 logging.error("Input Reads file %s doesn't end with .fasta or .fastq!")
+                 exit(0)
+              
+-            logging.info("Loaded %d Reads" % (len(inputReads.keys())))
++            logging.info("Loaded %d Reads" % (len(list(inputReads.keys()))))
+             parsed = 0
+-            for usedRead in inputReads.keys():
++            for usedRead in list(inputReads.keys()):
+                 try:
+                     gaps = self.readSupport[usedRead]
+                 except KeyError:
+@@ -206,9 +206,9 @@
+                         numReads += 1
+                         outputQueue[gapName].append(inputReads[usedRead].toString(start, end))
+                 
+-                if len(outputQueue.keys()) >= MAXGAPHOLD:
++                if len(list(outputQueue.keys())) >= MAXGAPHOLD:
+                     logging.info("Flushing Output Queue of %d gaps %d reads" % \
+-                                  (len(outputQueue.keys()), numReads))
++                                  (len(list(outputQueue.keys())), numReads))
+                     self.flushQueue(outputQueue)
+                     logging.info("Finshed Flush")
+                     numReads = 0
+@@ -326,7 +326,7 @@
+         splRE = re.compile("\s+")
+         fasta = FastaFile(fastaFn)
+         qual = QualFile(qualFn, convert=False)
+-        logging.info("Selective loading from %d reads" % (len(fasta.values())))
++        logging.info("Selective loading from %d reads" % (len(list(fasta.values()))))
+         ret = {}
+         for key in fasta:
+             try:
+--- pbsuite/jelly/GetSubs.py
++++ pbsuite/jelly/GetSubs.py
+@@ -24,7 +24,7 @@
+             b = connector.extendsTarget(r2)
+             if a != SUPPORTFLAGS.none and b != SUPPORTFLAGS.none:
+                 spanCount += 1
+-                print r1.qname, "spans"
++                print(r1.qname, "spans")
+                 
+                 rStart = min(r1.qend, r2.qend)
+                 rEnd = max(r1.qstart, r2.qstart)
+@@ -46,7 +46,7 @@
+             elif a.tname.endswith('e3'):
+                 fout.write(str(reads[a.qname].subSeq(a.qend, a.qseqlength)))
+     fout.close()
+-    print "%d spans" % spanCount
++    print("%d spans" % spanCount)
+     fout = open("seed.fasta",'w')
+     fout.write(">%s\n%s\n" % (best.name, best.seq))
+     fout.close()
+--- pbsuite/jelly/Jelly.py
++++ pbsuite/jelly/Jelly.py
+@@ -75,7 +75,7 @@
+             self.referenceIndex = self.reference+".sa"
+             
+         inputNode = root.find("input")
+-        if inputNode.attrib.has_key("baseDir"):
++        if "baseDir" in inputNode.attrib:
+             self.baseDir = inputNode.attrib["baseDir"]
+         else:
+             self.baseDir = ""
+@@ -182,11 +182,11 @@
+         if self.options.help == True:
+             if len(args) == 1:
+                 if args[0] in STAGES:
+-                    print exe(Stages.PRINT_HELPS[args[0]])[1]
++                    print(exe(Stages.PRINT_HELPS[args[0]])[1])
+                     sys.exit(0)
+                 #Else, this will drop down to the next parser.error
+             else:
+-                print parser.format_help()
++                print(parser.format_help())
+                 sys.exit(0)
+         if len(args) != 2 or args[0] not in STAGES:
+             parser.error("Invalid Arguments. Expected one of\n'%s'" % "', '".join(STAGES))
+--- pbsuite/jelly/QFix.py
++++ pbsuite/jelly/QFix.py
+@@ -11,15 +11,15 @@
+     input = FastqFile("input.fastq")
+ 
+     fout = open("ref.fasta",'w')
+-    for i in input.values():
++    for i in list(input.values()):
+         if i.name.startswith("ref"):
+             fout.write(">%s\n%s\n" % (i.name, i.seq))
+     fout.close()
+     
+-    print exe(("blasr input.fastq ref.fasta  --bestn 2 -m 5 --noSplitSubreads > out.m5"))
+-    print exe(("python /stornext/snfs5/next-gen/scratch/english/Jelly/"
+-               "DevJelly/branches/consensusDev/GetSubs.py out.m5 input.fastq"))
+-    print exe(("python /stornext/snfs5/next-gen/scratch/english/Jelly/"
++    print(exe(("blasr input.fastq ref.fasta  --bestn 2 -m 5 --noSplitSubreads > out.m5")))
++    print(exe(("python /stornext/snfs5/next-gen/scratch/english/Jelly/"
++               "DevJelly/branches/consensusDev/GetSubs.py out.m5 input.fastq")))
++    print(exe(("python /stornext/snfs5/next-gen/scratch/english/Jelly/"
+                "DevJelly/branches/sv/pbjPolish.py "
+-               "reads.fastq seed.fasta -n 4 -l"))
++               "reads.fastq seed.fasta -n 4 -l")))
+ 
+--- pbsuite/jelly/Support.py
++++ pbsuite/jelly/Support.py
+@@ -89,7 +89,7 @@
+             else:
+                 ret[key] = r
+         
+-        return ret.values()
++        return list(ret.values())
+             
+     def connect(self, hits, sameStrand=False, sameTar=False):
+         """
+@@ -244,10 +244,10 @@
+         logging.debug("maxFlank %d - minCovers %d" % (maxFlank, minCovers))
+         logging.debug("Checking 5End of Scaff %s %s" % (alignment.tname, alignment.qname))
+         ret += self.supportsRegion(alignment, alignment.tname, \
+-                                         -sys.maxint, 0, maxFlank, minCovers)
++                                         -sys.maxsize, 0, maxFlank, minCovers)
+         logging.debug("Checking 3End of Scaff %s %s" % (alignment.tname, alignment.qname))
+         ret += self.supportsRegion(alignment, alignment.tname, \
+-                                      alignment.tseqlength, sys.maxint, maxFlank, minCovers)
++                                      alignment.tseqlength, sys.maxsize, maxFlank, minCovers)
+         
+         #Orientation correct - how we're extending target
+         if ret == SUPPORTFLAGS.right:
+@@ -446,7 +446,7 @@
+         ret = [anchor]
+         while foundNew:
+             foundNew = False
+-            reads = filter(lambda x: x not in ret, allReads)
++            reads = [x for x in allReads if x not in ret]
+             if len(reads) == 0:
+                 continue
+             sides = { 1: [],
+@@ -658,7 +658,7 @@
+                 except KeyError:
+                     pass#No gaps
+             else:#never happens?
+-                gaps = filter(lambda x: x.startswith(scaffold), self.gapInfo.keys())
++                gaps = [x for x in list(self.gapInfo.keys()) if x.startswith(scaffold)]
+                 for key in gaps:
+                     candidates.append(self.gapInfo[key])
+             
+--- pbsuite/jelly/m4pie.py
++++ pbsuite/jelly/m4pie.py
+@@ -34,7 +34,7 @@
+     nreads      = 0
+     ntails      = 0
+     nmultitails = 0
+-    for r in reads.keys(): # protecting for spaces
++    for r in list(reads.keys()): # protecting for spaces
+         reads[r.split(' ')[0]] = reads[r]
+         
+     for read in aligns:
+@@ -163,7 +163,7 @@
+     return args
+     
+ def run(argv):
+-    print argv
++    print(argv)
+     args = parseArgs(argv)
+     if args.m4.endswith("m5"):
+         aligns = M5File(args.m4)
+--- pbsuite/utils/BamStat.py
++++ pbsuite/utils/BamStat.py
+@@ -94,7 +94,7 @@
+             mat += 1
+ 
+     acc = mat/float(mat+ins+dels+sub)
+-    tot = len(filter(lambda x: x != '-', query))
++    tot = len([x for x in query if x != '-'])
+     return acc, tot, ins, dels, sub
+     
+ if __name__ == '__main__':
+@@ -147,7 +147,7 @@
+     
+     errCnt = float(insertions + deletions + subs)
+     stats = getStats(readLengths)
+-    space = str(max([len(str(x)) for x in stats.values()])+2)
++    space = str(max([len(str(x)) for x in list(stats.values())])+2)
+     report = ("#Seqs  | {numSeqs:%d,}\n"
+               "Min    | {min:%d,}\n"
+               "1st Qu.| {FstQu:%d,}\n" + \
+@@ -161,24 +161,24 @@
+               "n95    | {n95:%d,}\n").replace("%d", str(space))
+      
+     #print stats
+-    print "Read Stats"#, json.dumps(getStats(readLengths), indent=4)
+-    print report.format(**stats)
+-    print "Bases Counted %d" % tot
+-    print "Average Accuracy %.2f" % (accuracy/cnt)
+-    print "Total Unmapped %d" % (unmapped)
+-    print "Percent Unmapped %.2f" % (unmapped/cnt)
+-    print
+-    print "Total Insertions %d" % insertions
+-    print "Average Insertions per Read %.2f" % (insertions/cnt)
+-    print "Percentage of errors Insertions %.2f" % (insertions/errCnt)
+-    print
+-    print "Total Deletions %d" % deletions
+-    print "Average Deletions per Read %.2f" % (deletions/cnt)
+-    print "Percentage of errors Deletions %.2f" % (deletions/errCnt)
+-    print
+-    print "Total Substitutions %d" % subs
+-    print "Average Substitutions per Read %.2f" % (subs/cnt)
+-    print "Percentage of errors Substitutions %.2f" % (subs/errCnt)
+-    print
+-    print "Total SoftClipped %d" % soft
+-    print "Average SoftClipped per Read %.2f" % (soft/cnt)
++    print("Read Stats")#, json.dumps(getStats(readLengths), indent=4)
++    print(report.format(**stats))
++    print("Bases Counted %d" % tot)
++    print("Average Accuracy %.2f" % (accuracy/cnt))
++    print("Total Unmapped %d" % (unmapped))
++    print("Percent Unmapped %.2f" % (unmapped/cnt))
++    print()
++    print("Total Insertions %d" % insertions)
++    print("Average Insertions per Read %.2f" % (insertions/cnt))
++    print("Percentage of errors Insertions %.2f" % (insertions/errCnt))
++    print()
++    print("Total Deletions %d" % deletions)
++    print("Average Deletions per Read %.2f" % (deletions/cnt))
++    print("Percentage of errors Deletions %.2f" % (deletions/errCnt))
++    print()
++    print("Total Substitutions %d" % subs)
++    print("Average Substitutions per Read %.2f" % (subs/cnt))
++    print("Percentage of errors Substitutions %.2f" % (subs/errCnt))
++    print()
++    print("Total SoftClipped %d" % soft)
++    print("Average SoftClipped per Read %.2f" % (soft/cnt))
+--- pbsuite/utils/CommandRunner.py
++++ pbsuite/utils/CommandRunner.py
+@@ -135,7 +135,7 @@
+     """
+     Helper function. splits list n into m partitions
+     """
+-    p = map(lambda x: list(), range(m))
++    p = [list() for x in range(m)]
+     index = 0
+     for item in n:
+         p[index].append(item)
+@@ -143,4 +143,4 @@
+             index += 1
+         else:
+             index = 0
+-    return filter(lambda x: len(x)>0, p)
++    return [x for x in p if len(x)>0]
+--- pbsuite/utils/FileHandlers.py
++++ pbsuite/utils/FileHandlers.py
+@@ -1,6 +1,6 @@
+ import re, sys, os, bisect, logging, copy
+ from collections import defaultdict
+-from StringIO import StringIO
++from io import StringIO
+ from string import maketrans
+ 
+ from networkx import draw, write_gml, write_graphml, Graph
+@@ -11,11 +11,11 @@
+ """
+ def wrap(string, width=100):
+     return os.linesep.join( \
+-        [ string[i:i+width] for i in xrange(0,len(string),width) ] )
++        [ string[i:i+width] for i in range(0,len(string),width) ] )
+ 
+ def qwrap(lst, width = 40):
+     buffer = []
+-    for i in xrange(0,len(lst),width):
++    for i in range(0,len(lst),width):
+         buffer.append( " ".join(map(str,lst[i:i+width])))
+     return "\n".join(buffer)
+ 
+@@ -69,7 +69,7 @@
+                 continue
+             
+             if self.convert:
+-                self[curName].extend(map(int, splRE.split(line.strip())))
++                self[curName].extend(list(map(int, splRE.split(line.strip()))))
+             else:
+                 self[curName].write(line.strip()+" ")
+         
+@@ -85,7 +85,7 @@
+             self[curName].write(line.strip() + " ")
+         
+         for key in self:
+-            self[key] = map(int, re.split("\s+", self[key].getvalue().strip()))
++            self[key] = list(map(int, re.split("\s+", self[key].getvalue().strip())))
+     
+     def toString(self):
+         buffer = []
+@@ -150,10 +150,10 @@
+         self.name = name
+         self.seq = str(seq)
+         if type(qual) == list:
+-            self.qual = "".join(map(lambda x: chr(x+33), qual))
++            self.qual = "".join([chr(x+33) for x in qual])
+         elif type(qual) == str:
+             self.qual = qual
+-        elif type(qual) == unicode:
++        elif type(qual) == str:
+             self.qual = str(qual)
+         else:
+             raise TypeError("FastqEntry.qual needs to be list, str or unicode. Not %s" % (type(qual)))
+@@ -252,7 +252,7 @@
+         Looks through file for scaffold name
+         based on scaffold index
+         """
+-        for x in self.keys():
++        for x in list(self.keys()):
+             if x.startswith(key):
+                 return self[x].scaffold
+         
+@@ -377,12 +377,11 @@
+         newGraph = copy.deepcopy(self.graph)
+         for node in newGraph.nodes_iter():
+             if len(newGraph.node[node]['extenders']) > 0:
+-                if newGraph.node[node].has_key('extenders'):
++                if 'extenders' in newGraph.node[node]:
+                     fout.write("extend\t%s\t%s\n" % (node, \
+                         "::".join(newGraph.node[node]['extenders'])))
+         for edgeA, edgeB in newGraph.edges_iter():
+-            ev = filter(lambda x: x != "Scaffold" and x != "Contig", \
+-                    newGraph[edgeA][edgeB]['evidence'])
++            ev = [x for x in newGraph[edgeA][edgeB]['evidence'] if x != "Scaffold" and x != "Contig"]
+             if len(ev) > 0:
+                 fout.write("evidence\t%s\t%s\t%s\n" % (edgeA, edgeB, "::".join(ev)))
+         
+@@ -490,7 +489,7 @@
+         for line in self.fileHandler.readlines():
+             try:
+                 self.append(M4Line(line.strip()))
+-            except TypeError, err:
++            except TypeError as err:
+                 sys.stderr.write("BadM4Line! \n%s\n%s\n" % (line, str(err)) )
+                 sys.exit(1)
+             
+@@ -601,7 +600,7 @@
+         for line in self.fileHandler.readlines():
+             try:
+                 self.append(M5Line(line.strip()))
+-            except TypeError, err:
++            except TypeError as err:
+                 sys.stderr.write("BadM5Line! \n%s\n%s\n" % (line, str(err)) )
+                 sys.exit(1)
+             
+@@ -724,7 +723,7 @@
+         fh.close()
+ 
+     def addEntry(self, entry):
+-        if not self.scaffoldRoots.has_key(entry.scaffold) or self.scaffoldRoots[entry.scaffold] is None:
++        if entry.scaffold not in self.scaffoldRoots or self.scaffoldRoots[entry.scaffold] is None:
+             self.scaffoldRoots[entry.scaffold] = entry
+             self.curRoot = entry
+         else:
+@@ -739,13 +738,13 @@
+         return self.hash[scaffold+str(oStart)]
+     
+     def removeEntry(self, entry):
+-        if not self.scaffoldRoots.has_key(entry.scaffold):
++        if entry.scaffold not in self.scaffoldRoots:
+             raise KeyError("Scaffold %s Not Found" % entry.scaffold)
+         
+         if entry.prev is not None:
+-            entry.prev.next = entry.next
++            entry.prev.next = entry.__next__
+         
+-        if entry.next is not None:
++        if entry.__next__ is not None:
+             entry.next.prev = entry.prev
+         #I need a better hashing function
+         #key = entry.scaffold+str(entry.oStart)
+@@ -753,7 +752,7 @@
+         
+         #if this is the only guy in the entire scaffolding
+         #Get rid of him
+-        if self.scaffoldRoots[entry.scaffold].next is None:
++        if self.scaffoldRoots[entry.scaffold].__next__ is None:
+             del(self.scaffoldRoots[entry.scaffold])
+     
+     def updateScaffold(self, entry, shift):
+@@ -766,8 +765,8 @@
+         #With the start's shift
+         #entry.prev.nEnd += startShift
+         
+-        while entry.next is not None:
+-            entry = entry.next
++        while entry.__next__ is not None:
++            entry = entry.__next__
+             if type(entry.nStart) == str:
+                 continue
+             entry.nStart += shift
+@@ -785,8 +784,8 @@
+         
+         if after == True:
+             newEntry.prev = existingEntry 
+-            newEntry.next = existingEntry.next 
+-            if newEntry.next is not None:
++            newEntry.next = existingEntry.__next__ 
++            if newEntry.__next__ is not None:
+                 newEntry.next.prev = newEntry
+             existingEntry.next = newEntry
+         else:
+@@ -808,11 +807,11 @@
+         return ret
+ 
+     def __iter__(self):
+-        for key in self.scaffoldRoots.keys():
++        for key in list(self.scaffoldRoots.keys()):
+             root = self.scaffoldRoots[key]
+-            while root.next is not None:
++            while root.__next__ is not None:
+                 yield root
+-                root = root.next
++                root = root.__next__
+             yield root
+         
+ class LiftOverEntry():
+@@ -842,10 +841,10 @@
+         """
+         return the next feature that is gType
+         """
+-        if self.next is None:
++        if self.__next__ is None:
+             return None
+         if self.next.gType == gType:
+-            return self.next
++            return self.__next__
+         else:
+             return self.next.getNext(gType)
+ 
+--- pbsuite/utils/VCFIO.py
++++ pbsuite/utils/VCFIO.py
+@@ -101,7 +101,7 @@
+             fout.write(str(self.ALT[i])+'\n')
+         for i in self.FORMAT:
+             fout.write(str(self.FORMAT[i])+'\n')
+-        fout.write(VCFEntry.header + "\t" + "\t".join(self.SAMPLES.keys()) + '\n')
++        fout.write(VCFEntry.header + "\t" + "\t".join(list(self.SAMPLES.keys())) + '\n')
+         for entry in self.__entries:
+             fout.write(str(entry) + '\n')
+         
+@@ -326,7 +326,7 @@
+         for key in self.SAMPLES:    
+             if type(key) == int:
+                 try:
+-                    newKey = vcffile.SAMPLES.keys()[key]
++                    newKey = list(vcffile.SAMPLES.keys())[key]
+                     newSamp[newKey] = self.SAMPLES[key]
+                 except IndexError:
+                     raise ValueError("More SAMPLES than VCFFile has in entry %s" % (str(self)))
+@@ -403,7 +403,7 @@
+ def test(filename):
+     f = VCFFile(filename, 'r')
+     for i in f:
+-        print str(i)
++        print(str(i))
+     return f
+ 
+ if __name__ == '__main__':
+--- pbsuite/utils/blasrToBed.py
++++ pbsuite/utils/blasrToBed.py
+@@ -15,7 +15,7 @@
+     elif fn.endswith('.m5'):
+         file = M5File(sys.argv[1])
+     else:
+-        print "Unrecognized File Type (expecting  .m4 or .m5)"
++        print("Unrecognized File Type (expecting  .m4 or .m5)")
+         exit(1)
+     
+     if len(sys.argv) == 3:
+@@ -23,4 +23,4 @@
+     else:
+         out = sys.stdout
+     
+-    out.write("\n".join(map(lambda x: x.toBed(), file))+"\n")
++    out.write("\n".join([x.toBed() for x in file])+"\n")
+--- pbsuite/utils/fakeQuals.py
++++ pbsuite/utils/fakeQuals.py
+@@ -1,7 +1,7 @@
+ #!/usr/bin/python3
+ import sys
+ from optparse import OptionParser
+-from FileHandlers import FastaFile
++from .FileHandlers import FastaFile
+ 
+ USAGE = """USAGE: %prog <input.fasta> <output.qual> [--options]
+ Creates fake quality information for fasta files that do not have associated \
+--- pbsuite/utils/fastqSplit.py
++++ pbsuite/utils/fastqSplit.py
+@@ -3,8 +3,8 @@
+ import sys
+ from optparse import OptionParser
+ from collections import namedtuple
+-from FileHandlers import wrap, qwrap, FastqFile
+-from StringIO import StringIO
++from .FileHandlers import wrap, qwrap, FastqFile
++from io import StringIO
+ 
+ USAGE = """Usage: %prog <input.fastq> <baseName>
+ Splits a fastq into <baseName>.fasta and <baseName>.qual
+@@ -54,7 +54,7 @@
+     Take a qual string that is phred/sanger encoded
+     turn it into a list of quals
+     """
+-    return map(lambda x: ord(x)-33, list(qual))
++    return [ord(x)-33 for x in list(qual)]
+     
+ if __name__ == '__main__':
+     fastq, baseName = __parseArgs()
+--- pbsuite/utils/longCCSCombine.py
++++ pbsuite/utils/longCCSCombine.py
+@@ -45,7 +45,7 @@
+ 
+     ccs = FastqFile(args.ccs_reads)
+     
+-    cKeys = ccs.keys()
++    cKeys = list(ccs.keys())
+     if args.output != None:
+         output = open(args.output,'w')
+     else:
+@@ -79,11 +79,11 @@
+         p = len(lst)/2
+         return lst[p]
+     
+-    a = len(ccsReads.keys())
++    a = len(list(ccsReads.keys()))
+     sys.stderr.write("+CCS reads    : %d\n" % (a))
+     b = sum(ccsReads.values())
+     sys.stderr.write("+CCS bases    : %d\n" % (b))
+-    c = len(subReads.keys())
++    c = len(list(subReads.keys()))
+     sys.stderr.write("-SUB reads    : %d\n" % (c))
+     d = sum(subReads.values())
+     sys.stderr.write("-SUB bases    : %d\n" % (d))
+--- pbsuite/utils/mapStats.py
++++ pbsuite/utils/mapStats.py
+@@ -49,7 +49,7 @@
+         stats["read"].append(sum(readLength.values()))
+         stats["aln_read"].append(alignedLength)
+     
+-    for sub in subreads.keys():
++    for sub in list(subreads.keys()):
+         readLength = subreads[sub][0].qseqlength
+         stats["subread"].append(readLength)
+         
+@@ -98,47 +98,47 @@
+         for input in a:
+             collectStats(stats, input)
+     
+-    print "Read Stats:"
++    print("Read Stats:")
+     read = getStats(stats["read"])
+     alnread = getStats(stats["aln_read"])
+-    print "Number of Reads\t", read["numSeqs"]
+-    print "Number of Bases\t", read["totalLength"]
+-    print "Mean Read Length\t", read["mean"]
+-    print "N50 Read Length\t", read["n50"]
+-    print "Number of Aligned Bases\t", alnread["totalLength"]
+-    print "Mean Aligned Read Length\t", alnread["mean"]
+-    print "N50 Aligned Read Length\t", alnread["n50"]
+-    print "Unmapped Bases\t", stats["unmappedTail"]
+-    print 
+-    print "Subread Stats:"
++    print("Number of Reads\t", read["numSeqs"])
++    print("Number of Bases\t", read["totalLength"])
++    print("Mean Read Length\t", read["mean"])
++    print("N50 Read Length\t", read["n50"])
++    print("Number of Aligned Bases\t", alnread["totalLength"])
++    print("Mean Aligned Read Length\t", alnread["mean"])
++    print("N50 Aligned Read Length\t", alnread["n50"])
++    print("Unmapped Bases\t", stats["unmappedTail"])
++    print() 
++    print("Subread Stats:")
+     subread = getStats(stats["subread"])
+     alnsubread = getStats(stats["aln_subread"])
+-    print "Number of Subreads\t", subread["numSeqs"]
+-    print "Total Subread Bases\t", subread["totalLength"]
+-    print "Mean Subread Length\t", subread["mean"]
+-    print "N50 Subread Length\t", subread["n50"]
+-    print "Total Subread Aligned Bases\t", alnsubread["totalLength"]
+-    print "Mean Subread Aligned Length\t", alnsubread["mean"]
+-    print "N50 Subread Aligned Length\t", alnsubread["n50"]
+-    print 
+-    print "Alignment Hit Stats:"
++    print("Number of Subreads\t", subread["numSeqs"])
++    print("Total Subread Bases\t", subread["totalLength"])
++    print("Mean Subread Length\t", subread["mean"])
++    print("N50 Subread Length\t", subread["n50"])
++    print("Total Subread Aligned Bases\t", alnsubread["totalLength"])
++    print("Mean Subread Aligned Length\t", alnsubread["mean"])
++    print("N50 Subread Aligned Length\t", alnsubread["n50"])
++    print() 
++    print("Alignment Hit Stats:")
+     hit = getStats(stats["hit"])
+     hitsim = getStats(stats["hitsim"])
+-    print "Number of Alignments\t", hit["numSeqs"]
+-    print "Total Hit Aligned Bases\t", hit["totalLength"]
+-    print "Mean Hit Aligned Length\t", hit["mean"]
+-    print "N50 Hit Aligned Length\t", hit["n50"]
+-    print "Mean Hit Percent Similarity\t", hitsim["mean"]
+-    print 
+-    print "Tailed (Split) Hits Stats:"
++    print("Number of Alignments\t", hit["numSeqs"])
++    print("Total Hit Aligned Bases\t", hit["totalLength"])
++    print("Mean Hit Aligned Length\t", hit["mean"])
++    print("N50 Hit Aligned Length\t", hit["n50"])
++    print("Mean Hit Percent Similarity\t", hitsim["mean"])
++    print() 
++    print("Tailed (Split) Hits Stats:")
+     tailhit = getStats(stats["tail"])
+     alntail = getStats(stats["aln_tail"])
+-    print "Number of Tailed Reads\t", tailhit["numSeqs"]
+-    print "Number of Tailed Bases\t", tailhit["totalLength"]
+-    print "Mean Tailed Read Length\t", tailhit["mean"]
+-    print "N50 Tailed Read Length\t", tailhit["n50"]
+-    print "Total Tailed Aligned Bases\t", alntail["totalLength"]
+-    print "Mean Tailed Alignment Length\t", alntail["mean"]
+-    print "N50 Tailed Alignment Length\t", alntail["n50"]
+-    print 
++    print("Number of Tailed Reads\t", tailhit["numSeqs"])
++    print("Number of Tailed Bases\t", tailhit["totalLength"])
++    print("Mean Tailed Read Length\t", tailhit["mean"])
++    print("N50 Tailed Read Length\t", tailhit["n50"])
++    print("Total Tailed Aligned Bases\t", alntail["totalLength"])
++    print("Mean Tailed Alignment Length\t", alntail["mean"])
++    print("N50 Tailed Alignment Length\t", alntail["n50"])
++    print() 
+     
+--- pbsuite/utils/mergeFaQu.py
++++ pbsuite/utils/mergeFaQu.py
+@@ -6,4 +6,4 @@
+ if __name__ == '__main__':
+     f = mergeFastaQual(sys.argv[1], sys.argv[2])
+     for i in f:
+-        print f[i].toString(),
++        print(f[i].toString(), end=' ')
+--- pbsuite/utils/quickN50.py
++++ pbsuite/utils/quickN50.py
+@@ -51,7 +51,7 @@
+     """
+     list of numbers - can be  a string if you want
+     """
+-    data = map(float, data)
++    data = list(map(float, data))
+     ret = getStats(data)
+     
+     outputOrder = ["itemSum",
+@@ -70,7 +70,7 @@
+                    "max"]
+ 
+     for key in outputOrder:
+-        print "{0}\t{1:.2f}".format(key, ret[key])
++        print("{0}\t{1:.2f}".format(key, ret[key]))
+ 
+ if __name__ == '__main__':
+     run(sys.stdin.read().strip().split('\n'))
+--- pbsuite/utils/readSummary.py
++++ pbsuite/utils/readSummary.py
+@@ -18,10 +18,10 @@
+     for i in protocol.inputs:
+         if i.endswith(".fasta"):
+             f = FastaFile(i)
+-            for j in f.values():
++            for j in list(f.values()):
+                 seqLengths.append(len(j))
+         if i.endswith(".fastq"):
+             f = FastqFile(i)
+-            for j in f.values():
++            for j in list(f.values()):
+                 seqLengths.append(len(j.seq))
+-    print "Read Stats", json.dumps(getStats(seqLengths), indent=4)
++    print("Read Stats", json.dumps(getStats(seqLengths), indent=4))
+--- pbsuite/utils/summarizeAssembly.py
++++ pbsuite/utils/summarizeAssembly.py
+@@ -2,7 +2,7 @@
+ import sys, re, math
+ from optparse import OptionParser
+ from string import Template
+-from FileHandlers import FastaFile
++from .FileHandlers import FastaFile
+ 
+ USAGE="""%prog <file.fasta> [options]
+ Returns basic statistics (like N50s) about an assembly"""
+@@ -88,12 +88,12 @@
+             i += 1
+         else:
+             if bincount != 0:
+-                print str(bin_mark-BINSIZE+1)+"bp : "+str(bin_mark)+"bp\t"+str(bincount)
++                print(str(bin_mark-BINSIZE+1)+"bp : "+str(bin_mark)+"bp\t"+str(bincount))
+             bincount = 0
+             bin_mark += BINSIZE
+ 
+     if bincount != 0:
+-        print str(bin_mark-BINSIZE+1)+"bp : "+str(bin_mark)+"bp\t"+str(bincount)
++        print(str(bin_mark-BINSIZE+1)+"bp : "+str(bin_mark)+"bp\t"+str(bincount))
+ 
+ if __name__ == '__main__':
+     opts, ref = parseArgs()
+@@ -176,7 +176,7 @@
+     contStats2 = getStats(contigLengthsNoN)
+     gapStats = getStats(gapLengths)
+     
+-    space = str(max([len(str(x)) for x in scafStats.values()])+2)
++    space = str(max([len(str(x)) for x in list(scafStats.values())])+2)
+     
+     report = ("#Seqs  | {numSeqs:%d,}\n"
+               "Min    | {min:%d,}\n"
+@@ -203,9 +203,9 @@
+                   "n95    | {n95:%d,} | {noNn95:%d,}\n").replace("%d",str(space))
+     
+     if scafStats["numSeqs"] == 0:
+-        print "="*20
+-        print "No Scaffolding!"
+-        print "="*20
++        print("="*20)
++        print("No Scaffolding!")
++        print("="*20)
+     else:
+         scafStats["noNMin" ] = scafStats2["min"]
+         scafStats["noN1q"]   = scafStats2["FstQu"]
+@@ -217,15 +217,15 @@
+         scafStats["noNn50"]  = scafStats2["n50"]
+         scafStats["noNn90"]  = scafStats2["n90"]
+         scafStats["noNn95"]  = scafStats2["n95"]
+-        print "="*20
+-        print "Scaffolds | withGaps | withoutGaps"
+-        print "="*20
+-        print reportDoub.format(**scafStats)
+-        print "="*20
++        print("="*20)
++        print("Scaffolds | withGaps | withoutGaps")
++        print("="*20)
++        print(reportDoub.format(**scafStats))
++        print("="*20)
+     
+     if contStats["numSeqs"] == 0:
+-        print "No Contigs! (or gaps betwen them)"
+-        print "="*20
++        print("No Contigs! (or gaps betwen them)")
++        print("="*20)
+     else:
+         contStats["noNMin" ] = contStats2["min"]
+         contStats["noN1q"]   = contStats2["FstQu"]
+@@ -237,19 +237,19 @@
+         contStats["noNn50"]  = contStats2["n50"]
+         contStats["noNn90"]  = contStats2["n90"]
+         contStats["noNn95"]  = contStats2["n95"]
+-        print "Contigs | withNs | withoutNs"
+-        print "="*20
+-        print reportDoub.format(**contStats)
+-        print "="*20
++        print("Contigs | withNs | withoutNs")
++        print("="*20)
++        print(reportDoub.format(**contStats))
++        print("="*20)
+     
+     if gapStats["numSeqs"] == 0:
+-        print "No Gaps!"
+-        print "="*20
++        print("No Gaps!")
++        print("="*20)
+     else:
+-        print "Gaps"
+-        print "="*20
+-        print report.format(**gapStats)
+-        print "="*20
+-    print "Non-gapped Ns Count: ", lowQualNs
++        print("Gaps")
++        print("="*20)
++        print(report.format(**gapStats))
++        print("="*20)
++    print("Non-gapped Ns Count: ", lowQualNs)
+     if opts.binsize != 0:
+         printBins(gapLengths, opts.binsize)
+--- pbsuite/utils/vcfTemplates/spotToVCF.py
++++ pbsuite/utils/vcfTemplates/spotToVCF.py
+@@ -59,7 +59,7 @@
+     
+        
+     for i in vcfout:
+-        print i
++        print(i)
+             
+     fh.close()
+ 
