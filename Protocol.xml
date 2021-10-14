@@ -1,0 +1,8 @@
+<jellyProtocol>
+    <reference>pathtopbsuite/docs/jellyExample/data/reference/lambda.fasta</reference>  
+    <outputDir>pathtopbsuite/docs/jellyExample/</outputDir>
+    <blasr>--minMatch 8 --minPctIdentity 70 --bestn 1 --nCandidates 20 --maxScore -500 --nproc 4 --noSplitSubreads</blasr>
+    <input baseDir="pathtopbsuite/docs/jellyExample/data/reads/">
+        <job>filtered_subreads.fastq</job>
+    </input>
+</jellyProtocol>
