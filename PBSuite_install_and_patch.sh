@@ -53,9 +53,12 @@ source ./setup.sh
 cd ./docs/jellyExample/
 
 chmod 777 ./Jellytest.sh
+echo "Testing PBJelly"
 sh ./Jellytest.sh
 cd -
 cd ./docs/honeyExample/
 chmod 777 ./workflow.sh
+echo "Testing PBHoney"
 sh ./workflow.sh
 cd -
+echo "Installed in" `pwd`
