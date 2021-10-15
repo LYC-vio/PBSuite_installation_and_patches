@@ -21,7 +21,7 @@ rm pbsuite_15.8.24+dfsg.orig.tar.xz
 cd PBSuite_15.8.24/
 
 #cp patches
-cp ../PBSuite_installation_and_patches/patches/*.patch .
+cp ../PBSuite_quick_installation/patches/*.patch .
 
 #Patch
 patch -p0 < fix-syntax-error.patch
@@ -39,12 +39,12 @@ patch -p0 < fix_py3.patch
 patch -p0 < 2to3_cleanup_assembly_and_support.patch
 
 #Copy configure files
-sed -i 's?pathtopbsuite?'`pwd`'?' ../PBSuite_installation_and_patches/setup.sh
-cp ../PBSuite_installation_and_patches/setup.sh .
-sed -i 's?pathtopbsuite?'`pwd`'?' ../PBSuite_installation_and_patches/Protocol.xml
-cp ../PBSuite_installation_and_patches/Protocol.xml ./docs/jellyExample/
-cp ../PBSuite_installation_and_patches/Jellytest.sh  ./docs/jellyExample/
-cp ../PBSuite_installation_and_patches/workflow.sh ./docs/honeyExample/
+sed -i 's?pathtopbsuite?'`pwd`'?' ../PBSuite_quick_installation/setup.sh
+cp ../PBSuite_quick_installation/setup.sh .
+sed -i 's?pathtopbsuite?'`pwd`'?' ../PBSuite_quick_installation/Protocol.xml
+cp ../PBSuite_quick_installation/Protocol.xml ./docs/jellyExample/
+cp ../PBSuite_quick_installation/Jellytest.sh  ./docs/jellyExample/
+cp ../PBSuite_quick_installation/workflow.sh ./docs/honeyExample/
 
 source setup.sh
 
