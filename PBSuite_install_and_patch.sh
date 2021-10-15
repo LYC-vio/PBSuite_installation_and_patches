@@ -1,14 +1,14 @@
 #!/bin/bash
 
 #Create environment for PBSuite
-conda create -n PBSuite python=3.6
+conda create -y -n PBSuite python=3.6
 source activate PBSuite
 pip install networkx==1.11
-conda install numpy
-conda install blasr
-conda install samtools
-conda install pysam
-conda install h5py
+conda install -y numpy
+conda install -y blasr
+conda install -y samtools
+conda install -y pysam
+conda install -y h5py
 pip install intervaltree_bio
 
 cd ..
