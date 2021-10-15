@@ -46,12 +46,16 @@ cp ../PBSuite_quick_installation/Protocol.xml ./docs/jellyExample/
 cp ../PBSuite_quick_installation/Jellytest.sh  ./docs/jellyExample/
 cp ../PBSuite_quick_installation/workflow.sh ./docs/honeyExample/
 
-source setup.sh
+chmod 777 ./setup.sh
+source ./setup.sh
 
 #Test installation
 cd ./docs/jellyExample/
-sh Jellytest.sh
+
+chmod 777 ./Jellytest.sh
+sh ./Jellytest.sh
 cd -
 cd ./docs/honeyExample/
-sh workflow.sh
+chmod 777 ./workflow.sh
+sh ./workflow.sh
 cd -
