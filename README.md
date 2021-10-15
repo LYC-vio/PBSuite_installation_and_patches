@@ -1,4 +1,4 @@
-# PBSuite\/PBHoney\/PBJelly quick installation
+# PBSuite\/PBHoney\/PBJelly Quick Installation
 Writing...
 ## Why I write this
 ## Quick start
