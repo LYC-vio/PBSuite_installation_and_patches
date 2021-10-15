@@ -46,6 +46,8 @@ cp ../PBSuite_installation_and_patches/Protocol.xml ./docs/jellyExample/
 cp ../PBSuite_installation_and_patches/Jellytest.sh  ./docs/jellyExample/
 cp ../PBSuite_installation_and_patches/workflow.sh ./docs/honeyExample/
 
+source setup.sh
+
 #Test installation
 cd ./docs/jellyExample/
 sh Jellytest.sh
