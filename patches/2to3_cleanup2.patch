@@ -1,0 +1,107 @@
+--- pbsuite/honey/bampie.py
++++ pbsuite/honey/bampie.py
+@@ -331,7 +331,7 @@
+         exit(1)
+
+     logging.info("Extracting tails")
+-    tailfastq = tempfile.NamedTemporaryFile(suffix=".fastq", delete=False, dir=args.temp)
++    tailfastq = tempfile.NamedTemporaryFile(mode='w',suffix=".fastq", delete=False, dir=args.temp)
+     tailfastq.close(); tailfastq = tailfastq.name
+     r, t, m = extractTails(bam, outFq=tailfastq, minLength=args.minTail)
+
+@@ -342,7 +342,7 @@
+         logging.info("No tails -- Exiting")
+         exit(0)
+
+-    tailmap = tempfile.NamedTemporaryFile(suffix=".sam", delete=False, dir=args.temp)
++    tailmap = tempfile.NamedTemporaryFile(mode='w',suffix=".sam", delete=False, dir=args.temp)
+     tailmap.close(); tailmap = tailmap.name
+
+     callBlasr(tailfastq, args.reference, args.params, args.nproc, tailmap)
+@@ -375,7 +375,7 @@
+             else:
+                 logging.debug("Mapping %s" % ifile)
+                 #Need to put this in a tempFile
+-                outName = tempfile.NamedTemporaryFile(suffix="map%d.sam" % (c), \
++                outName = tempfile.NamedTemporaryFile(mode='w',suffix="map%d.sam" % (c), \
+                                                      delete=False, dir=args.temp)
+                 outName.close(); outName=outName.name
+                 callBlasr(ifile, args.reference, args.params, args.nproc, outName)
+--- pbsuite/honey/HSpots.py
++++ pbsuite/honey/HSpots.py
+@@ -941,15 +941,15 @@
+             #use the rest for cleaning
+
+             #building consensus sequence
+-            foutreads = NamedTemporaryFile(suffix=".fastq")
++            foutreads = NamedTemporaryFile(mode='w',suffix=".fastq")
+             for id, i in enumerate(supportReads):
+                 foutreads.write("@%d\n%s\n+\n%s\n" % (id, i[0], i[1]))
+             foutreads.flush()
+-            foutref = NamedTemporaryFile(suffix=".fasta")
++            foutref = NamedTemporaryFile(mode='w',suffix=".fasta")
+             foutref.write(">%s:%d-%d\n%s" % (spot.chrom, start, end, refread[1]))
+             foutref.flush()
+
+-            alignOut = NamedTemporaryFile(suffix=".m5")
++            alignOut = NamedTemporaryFile(mode='w',suffix=".m5")
+             logging.debug("making the contig....")
+             #run it through phrap
+
+@@ -984,12 +984,12 @@
+             logging.debug("%s %d bp seq" % (conName, len(con.split('\n')[1])))
+
+             #try improving consensus
+-            conOut = NamedTemporaryFile(suffix=".fasta")
++            conOut = NamedTemporaryFile(mode='w',suffix=".fasta")
+             conOut.write(con)
+             #conOut.close()
+             conOut.flush()
+
+-            refOut = NamedTemporaryFile(suffix=".fasta")
++            refOut = NamedTemporaryFile(mode='w',suffix=".fasta")
+             #j = reference.fetch(chrom, max(0, start-buffer), end+buffer)
+             #fout = open("fuckme.ref.fasta",'w')
+             #fout.write(j)
+@@ -999,7 +999,7 @@
+             refOut.flush()
+
+             #map consensus to refregion
+-            varSam = NamedTemporaryFile(suffix=".sam")
++            varSam = NamedTemporaryFile(mode='w',suffix=".sam")
+             blasr(conOut.name, refOut.name, format="--sam", outname=varSam.name,\
+                 consensus=False) #-- would this help?
+                 #or what if I fed it through leftalign?
+diff -r -u bin/m4pie.py bin_new/m4pie.py
+--- pbsuite/jelly/m4pie.py
++++ pbsuite/jelly/m4pie.py
+@@ -182,7 +182,7 @@
+         exit(1)
+
+     logging.info("Extracting tails")
+-    tailfastq = tempfile.NamedTemporaryFile(suffix=".fasta", delete=False, dir=args.temp)
++    tailfastq = tempfile.NamedTemporaryFile(mode='w',suffix=".fasta", delete=False, dir=args.temp)
+     tailfastq.close(); tailfastq = tailfastq.name
+     logging.debug("Tail read tmp file %s " % (tailfastq))
+     r, t, m = extractTails(aligns, reads, outFq=tailfastq, minLength=args.minTail)
+@@ -195,7 +195,7 @@
+         exit(0)
+
+     logging.info("Mapping Tails")
+-    tailmap = tempfile.NamedTemporaryFile(suffix=".m4", delete=False, dir=args.temp)
++    tailmap = tempfile.NamedTemporaryFile(mode='w',suffix=".m4", delete=False, dir=args.temp)
+     tailmap.close(); tailmap = tailmap.name
+     logging.debug("Read map tmp file %s " % (tailmap))
+     mapTails(tailfastq, args.ref, nproc=args.nproc, out=tailmap, useSa=args.noSa)
+diff -r -u bin/TGraf.py bin_new/TGraf.py
+--- pbsuite/honey/TGraf.py
++++ pbsuite/honey/TGraf.py
+@@ -699,7 +699,7 @@
+             fout.write(str(clu) + "\t" + chrom + "\t" + j.toPrettyStr()+"\n")
+             if args.fastq:
+                 fastq = io.StringIO()
+-                tfn = NamedTemporaryFile(suffix=".bam", delete=False).name
++                tfn = NamedTemporaryFile(mode='w',suffix=".bam", delete=False).name
+                 align = pysam.Samfile(tfn, 'wb', template=bam)
+                 for r in j.breads:
+                     read = r.read
