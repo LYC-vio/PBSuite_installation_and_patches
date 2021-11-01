@@ -1,0 +1,453 @@
+diff -r -u pbsuite/honey/bakH.py pbsuite_new/honey/bakH.py
+--- pbsuite/honey/bakH.py	2021-11-01 05:40:33.213557803 -0500
++++ pbsuite_new/honey/bakH.py	2021-11-01 05:43:29.129608018 -0500
+@@ -931,7 +931,7 @@
+         #use the rest for cleaning
+     
+         #building consensus sequence
+-        foutreads = NamedTemporaryFile(suffix=".fasta")
++        foutreads = NamedTemporaryFile(mode='w',suffix=".fasta")
+         qoutreads = open(foutreads.name + '.qual', 'w')
+         for id, i in enumerate(origSupportReads):
+             foutreads.write(">%d\n%s\n" % (id, i[0]))
+@@ -939,7 +939,7 @@
+         foutreads.flush()
+         qoutreads.flush()
+         
+-        #foutref = NamedTemporaryFile(suffix=".fasta")
++        #foutref = NamedTemporaryFile(mode='w',suffix=".fasta")
+         #foutref.write(">%s:%d-%d\n%s" % (spot.chrom, start, end, refread[1]))
+         #foutref.flush()
+         
+@@ -966,7 +966,7 @@
+         #then run it through consensus
+         logging.debug("Polishing contigs")
+         
+-        alignOut = NamedTemporaryFile(suffix=".m5")
++        alignOut = NamedTemporaryFile(mode='w',suffix=".m5")
+         blasr(foutreads.name, foutreads.name + ".contigs", format="-m 5", nproc=1, outname=alignOut.name)
+         # elif no asm and consensus only (faster)
+         
+@@ -997,12 +997,12 @@
+         logging.debug("%s %d bp seq" % (conName, len(con.split('\n')[1])))
+         
+         #try improving consensus
+-        conOut = NamedTemporaryFile(suffix=".fasta")
++        conOut = NamedTemporaryFile(mode='w',suffix=".fasta")
+         conOut.write(con)
+         #conOut.close()
+         conOut.flush()
+         
+-        refOut = NamedTemporaryFile(suffix=".fasta")
++        refOut = NamedTemporaryFile(mode='w',suffix=".fasta")
+         #j = reference.fetch(chrom, max(0, start-buffer), end+buffer)
+         #fout = open("fuckme.ref.fasta",'w')
+         #fout.write(j)
+@@ -1012,7 +1012,7 @@
+         refOut.flush()
+         
+         #map consensus to refregion
+-        varSam = NamedTemporaryFile(suffix=".sam")
++        varSam = NamedTemporaryFile(mode='w',suffix=".sam")
+         blasr(conOut.name, refOut.name, format="--sam", outname=varSam.name)
+             #consensus=False) -- would this help?
+             #or what if I fed it through leftalign?
+diff -r -u pbsuite/honey/bampie.py pbsuite_new/honey/bampie.py
+--- pbsuite/honey/bampie.py	2021-11-01 05:40:33.214207907 -0500
++++ pbsuite_new/honey/bampie.py	2021-11-01 05:43:29.121289685 -0500
+@@ -331,7 +331,7 @@
+         exit(1)
+     
+     logging.info("Extracting tails")
+-    tailfastq = tempfile.NamedTemporaryFile(suffix=".fastq", delete=False, dir=args.temp)
++    tailfastq = tempfile.NamedTemporaryFile(mode='w',suffix=".fastq", delete=False, dir=args.temp)
+     tailfastq.close(); tailfastq = tailfastq.name
+     r, t, m = extractTails(bam, outFq=tailfastq, minLength=args.minTail)
+     
+@@ -342,7 +342,7 @@
+         logging.info("No tails -- Exiting")
+         exit(0)
+     
+-    tailmap = tempfile.NamedTemporaryFile(suffix=".sam", delete=False, dir=args.temp)
++    tailmap = tempfile.NamedTemporaryFile(mode='w',suffix=".sam", delete=False, dir=args.temp)
+     tailmap.close(); tailmap = tailmap.name
+     
+     callBlasr(tailfastq, args.reference, args.params, args.nproc, tailmap)
+@@ -375,7 +375,7 @@
+             else:
+                 logging.debug("Mapping %s" % ifile)
+                 #Need to put this in a tempFile
+-                outName = tempfile.NamedTemporaryFile(suffix="map%d.sam" % (c), \
++                outName = tempfile.NamedTemporaryFile(mode='w',suffix="map%d.sam" % (c), \
+                                                      delete=False, dir=args.temp)
+                 outName.close(); outName=outName.name
+                 callBlasr(ifile, args.reference, args.params, args.nproc, outName)
+diff -r -u pbsuite/honey/HSpots.py pbsuite_new/honey/HSpots.py
+--- pbsuite/honey/HSpots.py	2021-11-01 05:40:33.233719937 -0500
++++ pbsuite_new/honey/HSpots.py	2021-11-01 05:43:29.118771423 -0500
+@@ -941,15 +941,15 @@
+             #use the rest for cleaning
+             
+             #building consensus sequence
+-            foutreads = NamedTemporaryFile(suffix=".fastq")
++            foutreads = NamedTemporaryFile(mode='w',suffix=".fastq")
+             for id, i in enumerate(supportReads):
+                 foutreads.write("@%d\n%s\n+\n%s\n" % (id, i[0], i[1]))
+             foutreads.flush()
+-            foutref = NamedTemporaryFile(suffix=".fasta")
++            foutref = NamedTemporaryFile(mode='w',suffix=".fasta")
+             foutref.write(">%s:%d-%d\n%s" % (spot.chrom, start, end, refread[1]))
+             foutref.flush()
+             
+-            alignOut = NamedTemporaryFile(suffix=".m5")
++            alignOut = NamedTemporaryFile(mode='w',suffix=".m5")
+             logging.debug("making the contig....")
+             #run it through phrap
+ 
+@@ -984,12 +984,12 @@
+             logging.debug("%s %d bp seq" % (conName, len(con.split('\n')[1])))
+             
+             #try improving consensus
+-            conOut = NamedTemporaryFile(suffix=".fasta")
++            conOut = NamedTemporaryFile(mode='w',suffix=".fasta")
+             conOut.write(con)
+             #conOut.close()
+             conOut.flush()
+             
+-            refOut = NamedTemporaryFile(suffix=".fasta")
++            refOut = NamedTemporaryFile(mode='w',suffix=".fasta")
+             #j = reference.fetch(chrom, max(0, start-buffer), end+buffer)
+             #fout = open("fuckme.ref.fasta",'w')
+             #fout.write(j)
+@@ -999,7 +999,7 @@
+             refOut.flush()
+             
+             #map consensus to refregion
+-            varSam = NamedTemporaryFile(suffix=".sam")
++            varSam = NamedTemporaryFile(mode='w',suffix=".sam")
+             blasr(conOut.name, refOut.name, format="--sam", outname=varSam.name,\
+                 consensus=False) #-- would this help?
+                 #or what if I fed it through leftalign?
+diff -r -u pbsuite/honey/HSpots.pyx pbsuite_new/honey/HSpots.pyx
+--- pbsuite/honey/HSpots.pyx	2021-11-01 05:40:33.200443740 -0500
++++ pbsuite_new/honey/HSpots.pyx	2021-11-01 05:43:29.126368388 -0500
+@@ -474,16 +474,16 @@
+     #use the rest for cleaning
+     
+     #building consensus sequence
+-    foutreads = NamedTemporaryFile(suffix=".fastq")
++    foutreads = NamedTemporaryFile(mode='w',suffix=".fastq")
+     for id, i in enumerate(supportReads):
+         foutreads.write("@%d\n%s\n+\n%s\n" % (id, i[0], i[1]))
+     foutreads.flush()
+     
+-    foutref = NamedTemporaryFile(suffix=".fasta")
++    foutref = NamedTemporaryFile(mode='w',suffix=".fasta")
+     foutref.write(">%s:%d-%d\n%s"%("ecoli", start, end, refread[1]))
+     foutref.flush()
+     
+-    alignOut = NamedTemporaryFile(suffix=".m5")
++    alignOut = NamedTemporaryFile(mode='w',suffix=".m5")
+     
+     blasr(foutreads.name, foutref.name, bestn=1, nproc=1, outname=alignOut.name)
+     #shutil.copyfile(foutreads.name, "sup.fastq")
+@@ -500,16 +500,16 @@
+         logging.debug("MySeq: " + con)
+         #Check if con is blank
+     
+-    conOut = NamedTemporaryFile(suffix=".fasta")
++    conOut = NamedTemporaryFile(mode='w',suffix=".fasta")
+     conOut.write(con)
+     conOut.flush()
+-    refOut = NamedTemporaryFile(suffix=".fasta")
++    refOut = NamedTemporaryFile(mode='w',suffix=".fasta")
+     refOut.write(">%s:%d-%d\n%s\n" % (chrom, start, end, \
+                  args.reference.fetch(chrom, start-buffer, end+buffer)))
+     refOut.flush()
+     
+     #map consensus to refregion
+-    varSam = NamedTemporaryFile(suffix=".sam")
++    varSam = NamedTemporaryFile(mode='w',suffix=".sam")
+     cmd = "blasr %s %s --sam --bestn 1 --affineAlign --out %s" % (conOut.name, refOut.name, varSam.name)
+     logging.debug(cmd)
+     logging.debug(exe(cmd))
+@@ -520,7 +520,7 @@
+ 
+     #convert sam to bam
+     input = pysam.Samfile(varSam.name)
+-    varBam = NamedTemporaryFile(suffix=".bam")
++    varBam = NamedTemporaryFile(mode='w',suffix=".bam")
+     output = pysam.Samfile(varBam.name, 'wb', template=input)
+     nReads = 0
+     for read in input:
+diff -r -u pbsuite/honey/massivePhrap.py pbsuite_new/honey/massivePhrap.py
+--- pbsuite/honey/massivePhrap.py	2021-11-01 05:40:33.215035876 -0500
++++ pbsuite_new/honey/massivePhrap.py	2021-11-01 05:43:29.123734549 -0500
+@@ -159,7 +159,7 @@
+         """
+         self.myTmpFiles = []
+         #Temporary Files
+-        fout = tempfile.NamedTemporaryFile(suffix=".fasta", delete=False, dir=self.tmpDir)
++        fout = tempfile.NamedTemporaryFile(mode='w',suffix=".fasta", delete=False, dir=self.tmpDir)
+         self.myTmpFiles.append(fout.name)
+         qout = open(fout.name + '.qual', 'w')
+         self.myTmpFiles.append(fout.name + '.qual')
+@@ -199,7 +199,7 @@
+             results.update(mergeFastaQual(fout.name + ".problems.contigs", fout.name + ".problems.contigs.qual"))
+         
+         #save to file
+-        fout = tempfile.NamedTemporaryFile(prefix = "asm" + self.data.name, \
++        fout = tempfile.NamedTemporaryFile(mode='w',prefix = "asm" + self.data.name, \
+                                     suffix=".fastq", delete=False, dir=self.tmpDir)
+         for key in results:
+             fout.write("@group" + self.data.name + "_" + key + "\n" + \
+@@ -278,14 +278,14 @@
+         """
+         self.myTmpFiles = []
+         #Temporary Files
+-        fout = tempfile.NamedTemporaryFile(suffix=".fasta", delete=False, dir=self.tmpDir)
++        fout = tempfile.NamedTemporaryFile(mode='w',suffix=".fasta", delete=False, dir=self.tmpDir)
+         self.myTmpFiles.append(fout.name)
+         
+         for name, seq, qual in reads:
+             fout.write(">%s\n%s\n" % (name, seq))
+         
+         fout.close()
+-        resultOut = tempfile.NamedTemporaryFile(prefix="minia_", delete=False, dir=self.tmpDir)
++        resultOut = tempfile.NamedTemporaryFile(mode='w',prefix="minia_", delete=False, dir=self.tmpDir)
+         
+         estSize = self.buffer * 2
+         if self.data.rest[0] != 'DEL':
+@@ -312,7 +312,7 @@
+             results[key] = FastqEntry(key, fasta[key], '?' * len(fasta[key]))
+         
+         #save to file
+-        fout = tempfile.NamedTemporaryFile(prefix = "asm" + self.data.name, \
++        fout = tempfile.NamedTemporaryFile(mode='w',prefix = "asm" + self.data.name, \
+                                     suffix=".fastq", delete=False, dir=self.tmpDir)
+         for key in results:
+             fout.write("@group" + self.data.name + "_" + key + "\n" + \
+@@ -417,19 +417,19 @@
+         """
+         self.myTmpFiles = []
+         #Temporary Files
+-        fout = tempfile.NamedTemporaryFile(prefix="spades_pe1", suffix=".fastq", delete=False, dir=self.tmpDir)
++        fout = tempfile.NamedTemporaryFile(mode='w',prefix="spades_pe1", suffix=".fastq", delete=False, dir=self.tmpDir)
+         self.myTmpFiles.append(fout.name)
+         for name, seq, qual in self.leftReads:
+             fout.write("@%s\n%s\n+\n%s\n" % (name, seq, qual))
+         fout.close()
+         
+-        fout2 = tempfile.NamedTemporaryFile(prefix="spades_pe2", suffix=".fastq", delete=False, dir=self.tmpDir)
++        fout2 = tempfile.NamedTemporaryFile(mode='w',prefix="spades_pe2", suffix=".fastq", delete=False, dir=self.tmpDir)
+         self.myTmpFiles.append(fout2.name)
+         for name, seq, qual in self.rightReads:
+             fout2.write("@%s\n%s\n+\n%s\n" % (name, seq, qual))
+         fout2.close()
+         
+-        foutp = tempfile.NamedTemporaryFile(prefix="spades_pb", suffix=".fastq", delete=False, dir=self.tmpDir)
++        foutp = tempfile.NamedTemporaryFile(mode='w',prefix="spades_pb", suffix=".fastq", delete=False, dir=self.tmpDir)
+         self.myTmpFiles.append(foutp.name)
+         for name, seq, qual in self.pbReads:
+             foutp.write("@%s\n%s\n+\n%s\n" % (name, seq, qual))
+@@ -462,7 +462,7 @@
+             results[key] = FastqEntry(key, fasta[key], '?' * len(fasta[key]))
+         
+         #save to file
+-        fout = tempfile.NamedTemporaryFile(prefix = "asm" + self.data.name, \
++        fout = tempfile.NamedTemporaryFile(mode='w',prefix = "asm" + self.data.name, \
+                                     suffix=".fastq", delete=False, dir=self.tmpDir)
+         for key in results:
+             fout.write("@group" + self.data.name + "_" + key + "\n" + \
+@@ -535,14 +535,14 @@
+         input-files need to be output into FRG
+         """
+         #Temporary Files
+-        fout = tempfile.NamedTemporaryFile(suffix=".fasta", delete=False, dir=self.tmpDir)
++        fout = tempfile.NamedTemporaryFile(mode='w',suffix=".fasta", delete=False, dir=self.tmpDir)
+         self.myTmpFiles.append(fout.name)
+         
+         for name, seq, qual in reads:
+             fout.write(">%s\n%s\n" % (name, seq))
+         
+         fout.close()
+-        resultOut = tempfile.NamedTemporaryFile(prefix="minia_", delete=False, dir=self.tmpDir)
++        resultOut = tempfile.NamedTemporaryFile(mode='w',prefix="minia_", delete=False, dir=self.tmpDir)
+         
+         estSize = self.buffer * 2
+         if self.data.rest[0] != 'DEL':
+@@ -569,7 +569,7 @@
+             results[key] = FastqEntry(key, fasta[key], '?' * len(fasta[key]))
+         
+         #save to file
+-        fout = tempfile.NamedTemporaryFile(prefix = "asm" + self.data.name, \
++        fout = tempfile.NamedTemporaryFile(mode='w',prefix = "asm" + self.data.name, \
+                                     suffix=".fastq", delete=False, dir=self.tmpDir)
+         for key in results:
+             fout.write("@group" + self.data.name + "_" + key + "\n" + \
+diff -r -u pbsuite/honey/TGraf.py pbsuite_new/honey/TGraf.py
+--- pbsuite/honey/TGraf.py	2021-11-01 05:40:33.232502895 -0500
++++ pbsuite_new/honey/TGraf.py	2021-11-01 05:43:29.131758137 -0500
+@@ -699,7 +699,7 @@
+             fout.write(str(clu) + "\t" + chrom + "\t" + j.toPrettyStr()+"\n")
+             if args.fastq:
+                 fastq = io.StringIO()
+-                tfn = NamedTemporaryFile(suffix=".bam", delete=False).name
++                tfn = NamedTemporaryFile(mode='w',suffix=".bam", delete=False).name
+                 align = pysam.Samfile(tfn, 'wb', template=bam)
+                 for r in j.breads:
+                     read = r.read
+diff -r -u pbsuite/jelly/Assembly.py pbsuite_new/jelly/Assembly.py
+--- pbsuite/jelly/Assembly.py	2021-11-01 05:40:33.219085691 -0500
++++ pbsuite_new/jelly/Assembly.py	2021-11-01 05:44:05.855552962 -0500
+@@ -33,7 +33,7 @@
+     #input reads
+     reads = FastqFile(query)
+     #map to make the primary
+-    primary= NamedTemporaryFile(prefix="primary_", suffix=".m4", delete=False, dir=basedir)
++    primary= NamedTemporaryFile(mode='w',prefix="primary_", suffix=".m4", delete=False, dir=basedir)
+     primary = primary.name
+     ALLTEMPFILES.append(primary)
+     blasr(query, target, fmt="4", nproc=nproc, bestn=1, outname=primary)
+@@ -49,7 +49,7 @@
+     mapOut = open(outname, "w")
+     
+     #where I'm putting the tails
+-    tfq = NamedTemporaryFile(prefix="tails_", suffix=".fastq", delete=False, dir=basedir)
++    tfq = NamedTemporaryFile(mode='w',prefix="tails_", suffix=".fastq", delete=False, dir=basedir)
+     ALLTEMPFILES.append( tfq.name )
+     whichEnd = defaultdict(list)
+     #extract the tails
+@@ -73,7 +73,7 @@
+     tfq.close()
+     logging.info("%d unmapped tails" % (ntails))
+     #map tails
+-    tailAlign = NamedTemporaryFile(prefix="tails_", suffix=".m5", delete=False, dir=basedir)
++    tailAlign = NamedTemporaryFile(mode='w',prefix="tails_", suffix=".m5", delete=False, dir=basedir)
+     tailAlign = tailAlign.name
+     ALLTEMPFILES.append(tailAlign)
+     blasr(tfq.name, target, nproc=nproc, bestn=1, outname=tailAlign)
+@@ -107,9 +107,9 @@
+     returns queryFileName, targetFileName
+     """
+     global ALLTEMPFILES
+-    query = NamedTemporaryFile(prefix="query_", suffix=".fastq", delete=False, dir=basedir)
++    query = NamedTemporaryFile(mode='w',prefix="query_", suffix=".fastq", delete=False, dir=basedir)
+     ALLTEMPFILES.append(query.name)
+-    target = NamedTemporaryFile(prefix="target_", suffix=".fasta", delete=False, dir=basedir)
++    target = NamedTemporaryFile(mode='w',prefix="target_", suffix=".fasta", delete=False, dir=basedir)
+     ALLTEMPFILES.append(target.name)
+     for read in reads:
+         if read.startswith("ref"):
+@@ -468,7 +468,7 @@
+             logging.warning("fill sequence is small (%dbp) can't call consensus" % (len(bestSpan.seq)))
+             #I don't know what to return here
+             
+-        ssfout = NamedTemporaryFile(prefix="span_", suffix=".fasta", delete=False, dir=basedir)
++        ssfout = NamedTemporaryFile(mode='w',prefix="span_", suffix=".fasta", delete=False, dir=basedir)
+         ALLTEMPFILES.append(ssfout.name)
+         logging.debug("spanning with %s" % (bestSpan.name))
+         ssfout.write(">%s\n%s\n" % (bestSpan.name, bestSpan.seq))
+@@ -483,7 +483,7 @@
+         if len(bestF1E.seq) < 50:
+             logging.warning("f1e sequence is small (%dbp) can't call consensus" % (len(bestF1E.seq)))
+             #I don't know what to return here
+-        f1sfout = NamedTemporaryFile(prefix="flank1_", suffix=".fasta", delete=False, dir=basedir)
++        f1sfout = NamedTemporaryFile(mode='w',prefix="flank1_", suffix=".fasta", delete=False, dir=basedir)
+         ALLTEMPFILES.append(f1sfout.name)
+         f1sfout.write(">%s\n%s\n" % (bestF1E.name, bestF1E.seq))
+         f1sfout.close()
+@@ -497,7 +497,7 @@
+         if len(bestF2E.seq) < 50:
+             logging.warning("f2e sequence is small (%dbp) can't call consensus" % (len(bestF2E.seq)))
+             #I don't know what to return here
+-        f2sfout = NamedTemporaryFile(prefix="flank2", suffix=".fasta", delete=False, dir=basedir)
++        f2sfout = NamedTemporaryFile(mode='w',prefix="flank2", suffix=".fasta", delete=False, dir=basedir)
+         ALLTEMPFILES.append(f2sfout.name)
+         f2sfout.write(">%s\n%s\n" % (bestF2E.name, bestF2E.seq))
+         f2sfout.close()
+@@ -519,7 +519,7 @@
+     #try to build span
+     if SUPPORTFLAGS.span in data.stats["support"][0]:
+         logging.debug("build span")
+-        alignFile = NamedTemporaryFile(prefix="scon_", suffix=".m5", delete=False, dir=args.tempDir)
++        alignFile = NamedTemporaryFile(mode='w',prefix="scon_", suffix=".m5", delete=False, dir=args.tempDir)
+         alignFile.close(); alignFile = alignFile.name
+         ALLTEMPFILES.append(alignFile)
+         #blasr(data.spanReads, data.spanSeed, bestn = 1, nproc = args.nproc, outname=alignFile)
+@@ -558,7 +558,7 @@
+     logging.debug((fl1Flag, fl2Flag))
+     if fl1Flag in data.stats["support"][1]:
+         logging.debug("build flank1 %d" % fl1Flag)
+-        alignFile = NamedTemporaryFile(prefix="f1con_", suffix=".m5", delete=False, dir=args.tempDir)
++        alignFile = NamedTemporaryFile(mode='w',prefix="f1con_", suffix=".m5", delete=False, dir=args.tempDir)
+         alignFile.close(); alignFile = alignFile.name
+         ALLTEMPFILES.append(alignFile)
+         #blasr(data.flank1Reads, data.flank1Seed, bestn=1, nproc=args.nproc, outname=alignFile)
+@@ -584,7 +584,7 @@
+     
+     if fl2Flag in data.stats["support"][2]:
+         logging.debug("build flank2 %d" % fl2Flag)
+-        alignFile = NamedTemporaryFile(prefix="f2con_", suffix=".m5", delete=False, dir=args.tempDir)
++        alignFile = NamedTemporaryFile(mode='w',prefix="f2con_", suffix=".m5", delete=False, dir=args.tempDir)
+         alignFile.close(); alignFile = alignFile.name
+         ALLTEMPFILES.append(alignFile)
+         #blasr(data.flank2Reads, data.flank2Seed, bestn=1, nproc=args.nproc, outname=alignFile)
+@@ -634,13 +634,13 @@
+     """
+     global ALLTEMPFILES
+     data = alldata.stats
+-    reads = NamedTemporaryFile(prefix="sol_", suffix=".fasta", delete=False, dir=args.tempDir)
++    reads = NamedTemporaryFile(mode='w',prefix="sol_", suffix=".fasta", delete=False, dir=args.tempDir)
+     ALLTEMPFILES.append(reads.name)
+     e1Seq = data["extendSeq1"]; e2Seq = data["extendSeq2"]
+     reads.write(">%s\n%s\n>%s\n%s\n" % ("seq1", e1Seq, "seq2", e2Seq))
+     reads.close()
+     
+-    alignFn = NamedTemporaryFile(prefix="sol_",suffix=".m5", delete=False, dir=args.tempDir)
++    alignFn = NamedTemporaryFile(mode='w',prefix="sol_",suffix=".m5", delete=False, dir=args.tempDir)
+     ALLTEMPFILES.append(alignFn.name)
+     blasr(reads.name, reads.name, nproc=args.nproc, outname=alignFn.name)
+     aligns = M5File(alignFn)
+@@ -688,9 +688,9 @@
+     sent query, I'm going to pop all of the united reads onto this
+     """
+     global ALLTEMPFILES
+-    alignFile = NamedTemporaryFile(prefix="uni_", suffix=".m5", delete=False, dir=args.tempDir).name
++    alignFile = NamedTemporaryFile(mode='w',prefix="uni_", suffix=".m5", delete=False, dir=args.tempDir).name
+     ALLTEMPFILES.append(alignFile)
+-    readFile = NamedTemporaryFile(prefix="uni_", suffix=".fasta", delete=False, dir=args.tempDir)
++    readFile = NamedTemporaryFile(mode='w',prefix="uni_", suffix=".fasta", delete=False, dir=args.tempDir)
+     ALLTEMPFILES.append(readFile.name)
+     
+     input = FastqFile(inputFastq)
+@@ -820,7 +820,7 @@
+     
+     preunitereads(supportFn, args)
+     
+-    onFlank = NamedTemporaryFile(prefix="onFlank_", suffix=".m5", delete=False, dir=args.tempDir)
++    onFlank = NamedTemporaryFile(mode='w',prefix="onFlank_", suffix=".m5", delete=False, dir=args.tempDir)
+     ALLTEMPFILES.append(onFlank.name)
+     onFlank.close()
+     tailblasr(supportFn, flankFn, nproc=args.nproc, \
+diff -r -u pbsuite/jelly/m4pie.py pbsuite_new/jelly/m4pie.py
+--- pbsuite/jelly/m4pie.py	2021-11-01 05:40:33.224205000 -0500
++++ pbsuite_new/jelly/m4pie.py	2021-11-01 05:43:29.132766105 -0500
+@@ -182,7 +182,7 @@
+         exit(1)
+     
+     logging.info("Extracting tails")
+-    tailfastq = tempfile.NamedTemporaryFile(suffix=".fasta", delete=False, dir=args.temp)
++    tailfastq = tempfile.NamedTemporaryFile(mode='w',suffix=".fasta", delete=False, dir=args.temp)
+     tailfastq.close(); tailfastq = tailfastq.name
+     logging.debug("Tail read tmp file %s " % (tailfastq))
+     r, t, m = extractTails(aligns, reads, outFq=tailfastq, minLength=args.minTail)
+@@ -195,7 +195,7 @@
+         exit(0)
+     
+     logging.info("Mapping Tails")
+-    tailmap = tempfile.NamedTemporaryFile(suffix=".m4", delete=False, dir=args.temp)
++    tailmap = tempfile.NamedTemporaryFile(mode='w',suffix=".m4", delete=False, dir=args.temp)
+     tailmap.close(); tailmap = tailmap.name
+     logging.debug("Read map tmp file %s " % (tailmap))
+     mapTails(tailfastq, args.ref, nproc=args.nproc, out=tailmap, useSa=args.noSa)
