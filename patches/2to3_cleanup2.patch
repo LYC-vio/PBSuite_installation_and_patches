@@ -1,6 +1,5 @@
-diff -r -u pbsuite/honey/bakH.py pbsuite_new/honey/bakH.py
---- pbsuite/honey/bakH.py	2021-11-01 05:40:33.213557803 -0500
-+++ pbsuite_new/honey/bakH.py	2021-11-01 05:43:29.129608018 -0500
+--- pbsuite/honey/bakH.py
++++ pbsuite/honey/bakH.py
 @@ -931,7 +931,7 @@
          #use the rest for cleaning
      
@@ -52,9 +51,8 @@ diff -r -u pbsuite/honey/bakH.py pbsuite_new/honey/bakH.py
          blasr(conOut.name, refOut.name, format="--sam", outname=varSam.name)
              #consensus=False) -- would this help?
              #or what if I fed it through leftalign?
-diff -r -u pbsuite/honey/bampie.py pbsuite_new/honey/bampie.py
---- pbsuite/honey/bampie.py	2021-11-01 05:40:33.214207907 -0500
-+++ pbsuite_new/honey/bampie.py	2021-11-01 05:43:29.121289685 -0500
+--- pbsuite/honey/bampie.py
++++ pbsuite/honey/bampie.py
 @@ -331,7 +331,7 @@
          exit(1)
      
@@ -82,9 +80,8 @@ diff -r -u pbsuite/honey/bampie.py pbsuite_new/honey/bampie.py
                                                       delete=False, dir=args.temp)
                  outName.close(); outName=outName.name
                  callBlasr(ifile, args.reference, args.params, args.nproc, outName)
-diff -r -u pbsuite/honey/HSpots.py pbsuite_new/honey/HSpots.py
---- pbsuite/honey/HSpots.py	2021-11-01 05:40:33.233719937 -0500
-+++ pbsuite_new/honey/HSpots.py	2021-11-01 05:43:29.118771423 -0500
+--- pbsuite/honey/HSpots.py
++++ pbsuite/honey/HSpots.py
 @@ -941,15 +941,15 @@
              #use the rest for cleaning
              
@@ -128,9 +125,8 @@ diff -r -u pbsuite/honey/HSpots.py pbsuite_new/honey/HSpots.py
              blasr(conOut.name, refOut.name, format="--sam", outname=varSam.name,\
                  consensus=False) #-- would this help?
                  #or what if I fed it through leftalign?
-diff -r -u pbsuite/honey/HSpots.pyx pbsuite_new/honey/HSpots.pyx
---- pbsuite/honey/HSpots.pyx	2021-11-01 05:40:33.200443740 -0500
-+++ pbsuite_new/honey/HSpots.pyx	2021-11-01 05:43:29.126368388 -0500
+--- pbsuite/honey/HSpots.pyx
++++ pbsuite/honey/HSpots.pyx
 @@ -474,16 +474,16 @@
      #use the rest for cleaning
      
@@ -180,9 +176,8 @@ diff -r -u pbsuite/honey/HSpots.pyx pbsuite_new/honey/HSpots.pyx
      output = pysam.Samfile(varBam.name, 'wb', template=input)
      nReads = 0
      for read in input:
-diff -r -u pbsuite/honey/massivePhrap.py pbsuite_new/honey/massivePhrap.py
---- pbsuite/honey/massivePhrap.py	2021-11-01 05:40:33.215035876 -0500
-+++ pbsuite_new/honey/massivePhrap.py	2021-11-01 05:43:29.123734549 -0500
+--- pbsuite/honey/massivePhrap.py
++++ pbsuite/honey/massivePhrap.py
 @@ -159,7 +159,7 @@
          """
          self.myTmpFiles = []
@@ -285,9 +280,8 @@ diff -r -u pbsuite/honey/massivePhrap.py pbsuite_new/honey/massivePhrap.py
                                      suffix=".fastq", delete=False, dir=self.tmpDir)
          for key in results:
              fout.write("@group" + self.data.name + "_" + key + "\n" + \
-diff -r -u pbsuite/honey/TGraf.py pbsuite_new/honey/TGraf.py
---- pbsuite/honey/TGraf.py	2021-11-01 05:40:33.232502895 -0500
-+++ pbsuite_new/honey/TGraf.py	2021-11-01 05:43:29.131758137 -0500
+--- pbsuite/honey/TGraf.py
++++ pbsuite/honey/TGraf.py
 @@ -699,7 +699,7 @@
              fout.write(str(clu) + "\t" + chrom + "\t" + j.toPrettyStr()+"\n")
              if args.fastq:
@@ -298,8 +292,8 @@ diff -r -u pbsuite/honey/TGraf.py pbsuite_new/honey/TGraf.py
                  for r in j.breads:
                      read = r.read
 diff -r -u pbsuite/jelly/Assembly.py pbsuite_new/jelly/Assembly.py
---- pbsuite/jelly/Assembly.py	2021-11-01 05:40:33.219085691 -0500
-+++ pbsuite_new/jelly/Assembly.py	2021-11-01 05:44:05.855552962 -0500
+--- pbsuite/jelly/Assembly.py
++++ pbsuite/jelly/Assembly.py
 @@ -33,7 +33,7 @@
      #input reads
      reads = FastqFile(query)
@@ -430,9 +424,8 @@ diff -r -u pbsuite/jelly/Assembly.py pbsuite_new/jelly/Assembly.py
      ALLTEMPFILES.append(onFlank.name)
      onFlank.close()
      tailblasr(supportFn, flankFn, nproc=args.nproc, \
-diff -r -u pbsuite/jelly/m4pie.py pbsuite_new/jelly/m4pie.py
---- pbsuite/jelly/m4pie.py	2021-11-01 05:40:33.224205000 -0500
-+++ pbsuite_new/jelly/m4pie.py	2021-11-01 05:43:29.132766105 -0500
+--- pbsuite/jelly/m4pie.py
++++ pbsuite/jelly/m4pie.py
 @@ -182,7 +182,7 @@
          exit(1)
      
