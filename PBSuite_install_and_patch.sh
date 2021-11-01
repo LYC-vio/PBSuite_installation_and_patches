@@ -36,7 +36,7 @@ patch -p0 < 2to3.patch
 patch -p0 < fix_py3.patch
 
 #fix some bugs in the py2->3 process
-patch -p0 < 2to3_cleanup_assembly_and_support.patch
+patch -p0 < 2to3_cleanup.patch
 
 #Copy configure files
 sed -i 's?pathtopbsuite?'`pwd`'?' ../PBSuite_quick_installation/setup.sh
